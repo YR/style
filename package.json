@@ -26,7 +26,8 @@
 			"chrome": [20,23],
 			"safari": [5.1],
 			"iphone": [6.0],
-			"ipad": [6.0]
+			"ipad": [6.0],
+			"android-browser": [4.2]
 		}
 	},
 	"buddy": {
