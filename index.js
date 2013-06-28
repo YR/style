@@ -1,95 +1,95 @@
-var id = require('util.identify')
+var _ = require('underscore')
 	, win = window
-	, doc = win.document
-	, RE_UNITS = /(px|%|em|ms|s)$/
-	, RE_IE_OPACITY = /opacity=(\d+)/i
-	, RE_RGB = /rgb\((\d+),\s?(\d+),\s?(\d+)\)/
-	, VENDOR_PREFIXES = ['-webkit-', '-moz-', '-ms-', '-o-']
+	, doc = window.document
+
 		// Hash of prefixed versions of properties
 		// (values to be replaced by platform specific property)
 	, prefixed = {
-		'border-bottom-left-radius': false,
-		'border-bottom-right-radius': false,
-		'border-top-left-radius': false,
-		'border-top-right-radius': false,
-		'box-shadow': false,
-		'transform': false,
-		'transform-origin': false,
-		'transform-style': false,
-		'transition-delay': false,
-		'transition-duration': false,
-		'transition-property': false,
-		'transition-timing-function': false,
-		'perspective': false,
-		'perspective-origin': false
+			'border-bottom-left-radius': false,
+			'border-bottom-right-radius': false,
+			'border-top-left-radius': false,
+			'border-top-right-radius': false,
+			'box-shadow': false,
+			'transform': false,
+			'transform-origin': false,
+			'transform-style': false,
+			'transition-delay': false,
+			'transition-duration': false,
+			'transition-property': false,
+			'transition-timing-function': false,
+			'perspective': false,
+			'perspective-origin': false
 		}
 		// Hash of default unit values
 	, numeric = {
-		'top': 'px',
-		'bottom': 'px',
-		'left': 'px',
-		'right': 'px',
-		'width': 'px',
-		'height': 'px',
-		'margin-top': 'px',
-		'margin-bottom': 'px',
-		'margin-left': 'px',
-		'margin-right': 'px',
-		'padding-top': 'px',
-		'padding-bottom': 'px',
-		'padding-left': 'px',
-		'padding-right': 'px',
-		'border-bottom-left-radius': 'px',
-		'border-bottom-right-radius': 'px',
-		'border-top-left-radius': 'px',
-		'border-top-right-radius': 'px',
-		'transition-duration': 'ms',
-		'opacity': '',
-		'font-size': 'px'
+			'top': 'px',
+			'bottom': 'px',
+			'left': 'px',
+			'right': 'px',
+			'width': 'px',
+			'height': 'px',
+			'margin-top': 'px',
+			'margin-bottom': 'px',
+			'margin-left': 'px',
+			'margin-right': 'px',
+			'padding-top': 'px',
+			'padding-bottom': 'px',
+			'padding-left': 'px',
+			'padding-right': 'px',
+			'border-bottom-left-radius': 'px',
+			'border-bottom-right-radius': 'px',
+			'border-top-left-radius': 'px',
+			'border-top-right-radius': 'px',
+			'transition-duration': 'ms',
+			'opacity': '',
+			'font-size': 'px'
 		}
 	, colour = {
-		'background-color': 'color',
-		'color': 'color',
-		'border-color': 'color'
+			'background-color': true,
+			'color': true,
+			'border-color': true
 		}
 		// Hash of shorthand properties
 	, shorthand = {
-		'border-radius': ['border-bottom-left-radius', 'border-bottom-right-radius', 'border-top-left-radius', 'border-top-right-radius'],
-		'border-color': ['border-bottom-color', 'border-left-color', 'border-top-color', 'border-right-color'],
-		'margin': ['margin-top', 'margin-right', 'margin-left', 'margin-bottom'],
-		'padding': ['padding-top', 'padding-right', 'padding-left', 'padding-bottom']
+			'border-radius': ['border-bottom-left-radius', 'border-bottom-right-radius', 'border-top-left-radius', 'border-top-right-radius'],
+			'border-color': ['border-bottom-color', 'border-left-color', 'border-top-color', 'border-right-color'],
+			'margin': ['margin-top', 'margin-right', 'margin-left', 'margin-bottom'],
+			'padding': ['padding-top', 'padding-right', 'padding-left', 'padding-bottom']
 		}
 	, defaultStyles = {}
-	, s, opacity, getPrefixed, setPrefixed;
+
+	, RE_UNITS = /(px|%|em|ms|s)$/
+	, RE_IE_OPACITY = /opacity=(\d+)/i
+	, RE_RGB = /rgb\((\d+),\s?(\d+),\s?(\d+)\)/
+	, VENDOR_PREFIXES = ['-webkit-', '-moz-', '-ms-', '-o-'];
 
 // Store all possible styles this platform supports
-s = current(doc.documentElement);
+var s = current(doc.documentElement);
 if (s.length) {
-	var prop;
 	for (var i = 0, n = s.length; i < n; i++) {
-		prop = s[i];
-		defaultStyles[prop] = true;
+		defaultStyles[s[i]] = true;
 	}
 } else {
-	for (prop in s) {
+	for (var prop in s) {
 		defaultStyles[prop] = true;
 	}
 }
 
 // Store opacity property name
-opacity = !defaultStyles['opacity'] && defaultStyles['filter'] ? 'filter' : 'opacity';
+var opacity = !defaultStyles['opacity'] && defaultStyles['filter'] ? 'filter' : 'opacity';
 
 // API
 exports.getPrefixed = getPrefixed;
+exports.setPrefixed = setPrefixed;
+exports.getShorthand = getShorthand;
+exports.expandShorthand = expandShorthand;
+exports.parseOpacity = parseOpacity;
+exports.getOpacityValue = getOpacityValue;
 exports.parseNumber = parseNumber;
 exports.getStyle = getStyle;
 exports.getNumericStyle = getNumericStyle;
 exports.setStyle = setStyle;
 exports.clearStyle = clearStyle;
-exports.getPrefixed = getPrefixed;
-exports.setPrefixed = setPrefixed;
-exports.getShorthand = getShorthand;
-exports.expandShorthand = expandShorthand;
 // CSS transitions feature test
 exports.csstransitions = getPrefixed('transition-duration') !== false;
 
@@ -111,12 +111,12 @@ function getPrefixed(property) {
  * @param {String} property
  */
 function setPrefixed(property) {
-	var vendor;
 	// Check if we have unprefixed prop
 	if (defaultStyles[property]) {
 		prefixed[property] = property;
 	}
 	// Try prefixed version
+	var vendor;
 	for (var i = 0, n = VENDOR_PREFIXES.length; i < n; i++) {
 		vendor = VENDOR_PREFIXES[i];
 		if (!prefixed[property]) {
@@ -138,7 +138,7 @@ function getShorthand(property) {
 	} else {
 		return property;
 	}
-};
+}
 
 /**
  * Expand shorthand properties
@@ -166,10 +166,11 @@ function parseOpacity(value) {
 	var match;
 	if (value === '') {
 		return null;
+	// IE case
 	} else if (opacity === 'filter') {
 		match = value.match(RE_IE_OPACITY);
 		if (match != null) {
-			return parseInt(match[1]) / 100;
+			return parseInt(match[1], 10) / 100;
 		}
 	} else {
 		return parseFloat(value);
@@ -210,14 +211,19 @@ function parseNumber(value, property) {
 		} else {
 			return [value || '#ffffff', 'hex'];
 		}
+	// Handle numbers
 	} else {
 		num = parseFloat(value);
-		if (id.isNaN(num)) {
+		if (_.isNaN(num)) {
 			return [value, ''];
 		} else {
 			unitTest = RE_UNITS.exec(value);
 			// Set unit or default
-			unit = (unitTest != null) ? unitTest[1] : ((numeric[property] != null) ? numeric[property] : 'px');
+			unit = (unitTest != null)
+				? unitTest[1]
+				: ((numeric[property] != null)
+						? numeric[property]
+						: 'px');
 			return [num, unit];
 		}
 	}
@@ -268,10 +274,11 @@ function getNumericStyle(element, property) {
  * @param {Object} value
  */
 function setStyle(element, property, value) {
+	if (element.jquery) element = element[0];
 	// Expand shorthands
 	property = expandShorthand(property, value);
 	// Handle property hash
-	if (id.isObject(property)) {
+	if (_.isObject(property)) {
 		for (var prop in property) {
 			setStyle(element, prop, property[prop]);
 		}
@@ -304,8 +311,9 @@ function clearStyle(element, property) {
 		, shortProp = property
 		, match, re, style;
 	property = shorthand[property] || property;
+	if (element.jquery) element = element[0];
 	// Loop through collection
-	if (id.isArray(property)) {
+	if (_.isArray(property)) {
 		for (var i = 0, n = property.length; i < n; i++) {
 			prop = property[i];
 			clearStyle(element, prop);
@@ -318,7 +326,7 @@ function clearStyle(element, property) {
 		}
 	}
 	style = element.getAttribute('style') || '';
-	re = new RegExp("\\s?" + (getPrefixed(property)) + ":\\s[^;]+");
+	re = new RegExp('\\s?' + (getPrefixed(property)) + ':\\s[^;]+');
 	match = re.exec(style);
 	if (match != null) {
 		element.setAttribute('style', style.replace(match + ';', ''));
@@ -332,12 +340,14 @@ function clearStyle(element, property) {
  * @returns {String}
  */
 function current(element, property) {
+	if (element.jquery) element = element[0];
 	if (win.getComputedStyle) {
 		if (property) {
 			return win.getComputedStyle(element).getPropertyValue(property);
 		} else {
 			return win.getComputedStyle(element);
 		}
+	// IE
 	} else {
 		if (property) {
 			return element.currentStyle[property];
@@ -345,7 +355,7 @@ function current(element, property) {
 			return element.currentStyle;
 		}
 	}
-};
+}
 
 /**
  * CamelCase string, removing '-'
@@ -355,4 +365,4 @@ function camelCase(str) {
 	return str.replace(/-([a-z])/g, function($0, $1) {
 		return $1.toUpperCase();
 	}).replace('-', '');
-};
+}

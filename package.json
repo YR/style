@@ -1,10 +1,10 @@
 {
-	"name": "dom.css",
+	"name": "style",
 	"description": "Cross-browser style manipulation",
 	"version": "0.1.0",
-	"author": "popeindustries <alex@pope-industries.com>",
+	"author": "Alexander Pope <alexander.pope@nrk.no>",
 	"dependencies": {
-		"util.identify": "git://github.com/popeindustries/util.identify.git"
+		"underscore": "1.4.4"
 	},
 	"devDependencies": {
 		"mocha": "*",
@@ -15,7 +15,7 @@
 	"main": "index.js",
 	"repository": {
 		"type": "git",
-		"url": "git://github.com/popeindustries/dom.css.git"
+		"url": "git://github.com/yr/style.git"
 	},
 	"testling": {
 		"harness": "mocha-bdd",
@@ -32,10 +32,10 @@
 	"buddy": {
 		"build": {
 			"js": {
-				"sources": ["node_modules/util.object"],
+				"sources": ["."],
 				"targets": [{
 					"input": "index.js",
-					"output": "test/dom.css.js"
+					"output": "test/style.js"
 				}]
 			}
 		}

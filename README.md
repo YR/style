@@ -1,14 +1,14 @@
-[![browser support](http://ci.testling.com/popeindustries/dom.css.png)](http://ci.testling.com/popeindustries/dom.css)
+[![browser support](http://ci.testling.com/yr/style.png)](http://ci.testling.com/yr/style)
 
 Cross-browser css manipulation.
 
 ## Usage
 ```javascript
-var css = require('dom.css');
+var style = require('style');
 
 var el = document.getElementById('myEl');
-var bgColor = css.getStyle(el, 'background-color'); // => '#ffffff'
-var left = css.getNumericStyle(el, 'left'); // => [75, 'px']
-css.setStyle(el, 'left', 80);
-css.clearStyle(el, 'left');
+var bgColor = style.getStyle(el, 'background-color'); // => '#ffffff'
+var left = style.getNumericStyle(el, 'left'); // => [75, 'px']
+style.setStyle(el, 'left', 80);
+style.clearStyle(el, 'left');
 ```
