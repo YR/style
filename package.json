@@ -19,7 +19,7 @@
 	},
 	"testling": {
 		"harness": "mocha-bdd",
-		"files": "test/css-test.js",
+		"files": "test/style-test.js",
 		"browsers": {
 			"ie": [7,8,9,10],
 			"firefox": [13,17],
