@@ -1,4 +1,6 @@
-var _ = require('underscore')
+var isObject = require('lodash.isobject')
+	, isNan = require('lodash.isnan')
+	, isArray = require('lodash.isarray')
 	, win = window
 	, doc = window.document
 
@@ -20,7 +22,7 @@ var _ = require('underscore')
 			'perspective': false,
 			'perspective-origin': false
 		}
-		// Hash of default unit values
+		// Hash of exceptional unit values
 	, numeric = {
 			'top': 'px',
 			'bottom': 'px',
@@ -40,8 +42,8 @@ var _ = require('underscore')
 			'border-bottom-right-radius': 'px',
 			'border-top-left-radius': 'px',
 			'border-top-right-radius': 'px',
-			'transition-duration': 'ms',
-			'opacity': '',
+ 			'transition-duration': 'ms',
+ 			'opacity': '',
 			'font-size': 'px'
 		}
 	, colour = {
@@ -75,7 +77,7 @@ if (s.length) {
 	}
 }
 
-// Store opacity property name
+// Store opacity property name (normalize IE opacity/filter)
 var opacity = !defaultStyles['opacity'] && defaultStyles['filter'] ? 'filter' : 'opacity';
 
 // API
@@ -91,13 +93,14 @@ exports.getNumericStyle = getNumericStyle;
 exports.setStyle = setStyle;
 exports.clearStyle = clearStyle;
 // CSS transitions feature test
-exports.csstransitions = getPrefixed('transition-duration') !== false;
+exports.hasTransitions = getPrefixed('transition-duration') !== false;
 
 /**
  * Retrieve the vendor prefixed version of the property
  * @param {String} property
+ * @returns {String}
  */
-function getPrefixed(property) {
+function getPrefixed (property) {
 	// If property is prefixed, set if necessary and retrieve
 	if (prefixed.hasOwnProperty(property)) {
 		if (!prefixed[property]) setPrefixed(property);
@@ -110,7 +113,7 @@ function getPrefixed(property) {
  * Store the vendor prefixed version of the property
  * @param {String} property
  */
-function setPrefixed(property) {
+function setPrefixed (property) {
 	// Check if we have unprefixed prop
 	if (defaultStyles[property]) {
 		prefixed[property] = property;
@@ -131,8 +134,9 @@ function setPrefixed(property) {
 /**
  * Retrieve a proxy property to use for shorthand properties
  * @param {String} property
+ * @returns {String}
  */
-function getShorthand(property) {
+function getShorthand (property) {
 	if (shorthand[property] != null) {
 		return shorthand[property][0];
 	} else {
@@ -144,8 +148,9 @@ function getShorthand(property) {
  * Expand shorthand properties
  * @param {String} property
  * @param {Object} value
+ * @returns {Object|String}
  */
-function expandShorthand(property, value) {
+function expandShorthand (property, value) {
 	if (shorthand[property] != null) {
 		var props = {};
 		for (var i = 0, n = shorthand[property].length; i < n; i++) {
@@ -162,7 +167,7 @@ function expandShorthand(property, value) {
  * @param {String} value
  * @returns {Number}
  */
-function parseOpacity(value) {
+function parseOpacity (value) {
 	var match;
 	if (value === '') {
 		return null;
@@ -182,7 +187,7 @@ function parseOpacity(value) {
  * @param {String} value
  * @returns {String}
  */
-function getOpacityValue(value) {
+function getOpacityValue (value) {
 	var val = parseFloat(value);
 	if (opacity === 'filter') {
 		val = "alpha(opacity=" + (val * 100) + ")";
@@ -196,8 +201,9 @@ function getOpacityValue(value) {
  * @param {String} property
  * @returns {Array}
  */
-function parseNumber(value, property) {
+function parseNumber (value, property) {
 	var channels, num, unit, unitTest;
+
 	// Handle colours
 	if (colour[property]) {
 		// rgb()
@@ -211,10 +217,11 @@ function parseNumber(value, property) {
 		} else {
 			return [value || '#ffffff', 'hex'];
 		}
+
 	// Handle numbers
 	} else {
 		num = parseFloat(value);
-		if (_.isNaN(num)) {
+		if (isNan(num)) {
 			return [value, ''];
 		} else {
 			unitTest = RE_UNITS.exec(value);
@@ -235,18 +242,22 @@ function parseNumber(value, property) {
  * @param {String} property
  * @returns {Object}
  */
-function getStyle(element, property) {
+function getStyle (element, property) {
 	var value;
+
+	// Special case for opacity
 	if (property === 'opacity') {
 		return parseOpacity(current(element, opacity));
 	}
+
 	// Retrieve longhand and prefixed version
 	property = getPrefixed(getShorthand(property));
 	value = current(element, property);
-	// Try camelCase
+	// Try property camelCase if no result
 	if (value == null) {
 		value = current(element, camelCase(property));
 	}
+
 	switch (value) {
 		case '':
 			return null;
@@ -263,7 +274,7 @@ function getStyle(element, property) {
  * @param {String} property
  * @returns {Number}
  */
-function getNumericStyle(element, property) {
+function getNumericStyle (element, property) {
 	return parseNumber(getStyle(element, property), property);
 }
 
@@ -273,24 +284,26 @@ function getNumericStyle(element, property) {
  * @param {String} property
  * @param {Object} value
  */
-function setStyle(element, property, value) {
-	if (element.jquery) element = element[0];
+function setStyle (element, property, value) {
 	// Expand shorthands
 	property = expandShorthand(property, value);
-	// Handle property hash
-	if (_.isObject(property)) {
+	// Handle property hash returned from expandShorthand
+	if (isObject(property)) {
 		for (var prop in property) {
 			setStyle(element, prop, property[prop]);
 		}
 		return;
 	}
+
 	// Fix opacity
 	if (property === 'opacity') {
 		property = opacity;
 		value = getOpacityValue(value);
 	}
+
 	// Look up prefixed property
 	property = getPrefixed(property);
+
 	// Look up default numeric unit if none provided
 	if (value !== 'auto'
 		&& value !== 'inherit'
@@ -298,6 +311,7 @@ function setStyle(element, property, value) {
 		&& !RE_UNITS.test(value)) {
 			value += numeric[property];
 	}
+
 	element.style[camelCase(property)] = value;
 }
 
@@ -306,14 +320,15 @@ function setStyle(element, property, value) {
  * @param {Element} element
  * @param {String} property
  */
-function clearStyle(element, property) {
+function clearStyle (element, property) {
 	var isShorthand = shorthand[property] != null
 		, shortProp = property
 		, match, re, style;
+
 	property = shorthand[property] || property;
-	if (element.jquery) element = element[0];
+
 	// Loop through collection
-	if (_.isArray(property)) {
+	if (isArray(property)) {
 		for (var i = 0, n = property.length; i < n; i++) {
 			prop = property[i];
 			clearStyle(element, prop);
@@ -325,6 +340,7 @@ function clearStyle(element, property) {
 			return;
 		}
 	}
+
 	style = element.getAttribute('style') || '';
 	re = new RegExp('\\s?' + (getPrefixed(property)) + ':\\s[^;]+');
 	match = re.exec(style);
@@ -339,8 +355,7 @@ function clearStyle(element, property) {
  * @param {String} property
  * @returns {String}
  */
-function current(element, property) {
-	if (element.jquery) element = element[0];
+function current (element, property) {
 	if (win.getComputedStyle) {
 		if (property) {
 			return win.getComputedStyle(element).getPropertyValue(property);

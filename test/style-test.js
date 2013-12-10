@@ -175,9 +175,9 @@ describe('style', function() {
       expect(element.getAttribute('style')).not.to.contain('margin');
     });
   });
-  describe('csstransition', function() {
+  describe('hasTransitions', function() {
     it('should return true if platform supports css transitions, and false if it does not', function() {
-      expect(style.csstransitions === true || style.csstransitions === false).to.be(true);
+      expect(style.hasTransitions === true || style.hasTransitions === false).to.be(true);
     });
   });
 });
