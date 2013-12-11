@@ -12,7 +12,8 @@
     "mocha": "*",
     "expect.js": "*",
     "buddy": "*",
-    "simple-browser-require": "*"
+    "simple-browser-require": "*",
+    "blanket": "*"
   },
   "main": "index.js",
   "repository": {
@@ -24,21 +25,27 @@
     "files": "test/style-test.js",
     "browsers": {
       "ie": [
-        7,
-        8,
         9,
         10
       ],
       "firefox": [
         13,
-        17
+        17,
+        20,
+        25
       ],
       "chrome": [
         20,
-        23
+        25,
+        30,
+        31
+      ],
+      "opera": [
+        17
       ],
       "safari": [
-        5.1
+        5.1,
+        6
       ],
       "iphone": [
         6
@@ -51,12 +58,12 @@
       ]
     }
   },
+  "scripts": {
+    "test": "buddy build && mocha-phantomjs test/test-runner.html"
+  },
   "buddy": {
     "build": {
       "js": {
-        "sources": [
-          "."
-        ],
         "targets": [
           {
             "input": "index.js",
@@ -64,9 +71,12 @@
           }
         ]
       }
+    },
+    "settings": {
+      "server": {
+        "directory": ".",
+        "port": 8000
+      }
     }
-  },
-  "scripts": {
-    "test": "./node_modules/.bin/buddy build && open test/test-runner.html"
   }
 }
