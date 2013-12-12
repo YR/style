@@ -14,20 +14,20 @@ describe('style', function () {
 	describe('helper functions', function () {
 		describe('getPrefixed()', function () {
 			it('should return a prefixed property name when passed the non-prefixed version', function () {
-				var prop = style.getPrefixed('transition-duration')
-					, props = ['-webkit-transition-duration', '-moz-transition-duration', '-ms-transition-duration', '-o-transition-duration', 'transition-duration'];
-				if (prop) {
-					expect(props).to.contain(prop);
+				var prop = style.getPrefixed('transition-duration');
+				if (prop != 'transition-duration') {
+					expect(prop).to.contain(style.prefix);
 				} else {
-					expect(prop).to.not.be.ok();
+					expect(prop).to.eql('transition-duration');
 				}
 			});
 		});
 
 		describe('getAll()', function () {
-			it('should return an array of all supported property names', function () {
-				var prop = style.getAll('transition');
-				console.log(prop);
+			it('should return an array of all possible property names', function () {
+				var props = style.getAll('border-radius');
+				expect(props).to.contain('border-radius');
+				expect(props.length).to.be.greaterThan(4);
 			});
 		});
 
@@ -153,7 +153,7 @@ describe('style', function () {
 		});
 	});
 
-	describe.skip('clearStyle()', function () {
+	describe('clearStyle()', function () {
 		beforeEach(function () {
 			element = document.createElement('div');
 			document.body.appendChild(element);
@@ -181,12 +181,12 @@ describe('style', function () {
 		});
 		it('should completely remove a shorthand style rule from a setStyle() call', function () {
 			style.setStyle(element, {
-				'margin': '10px',
+				'border-radius': '10px',
 				'width': 100,
 				'height': 100
 			});
-			style.clearStyle(element, 'margin');
-			expect(element.getAttribute('style')).not.to.contain('margin');
+			style.clearStyle(element, 'border-radius');
+			expect(element.getAttribute('style')).not.to.contain('border-radius');
 		});
 	});
 

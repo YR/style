@@ -231,24 +231,6 @@ require.register('style', function(module, exports, require) {
   	, win = window
   	, doc = window.document
   
-  		// Hash of prefixed versions of properties
-  		// (values to be replaced by platform specific property)
-  	, prefixed = {
-  			'border-bottom-left-radius': false,
-  			'border-bottom-right-radius': false,
-  			'border-top-left-radius': false,
-  			'border-top-right-radius': false,
-  			'box-shadow': false,
-  			'transform': false,
-  			'transform-origin': false,
-  			'transform-style': false,
-  			'transition-delay': false,
-  			'transition-duration': false,
-  			'transition-property': false,
-  			'transition-timing-function': false,
-  			'perspective': false,
-  			'perspective-origin': false
-  		}
   		// Hash of unit values
   	, numeric = {
   			'top': 'px',
@@ -301,6 +283,14 @@ require.register('style', function(module, exports, require) {
   			if (!prefix && prop.charAt(0) == '-') {
   				prefix = /^-\w+-/.exec(prop)[0];
   			}
+  			// Force inclusion of 'transition'
+  			if (prefix && ~prop.indexOf('transition')) {
+  				if (~prop.indexOf(prefix)) {
+  					defaultStyles[prefix + 'transition'] = true;
+  				} else {
+  					defaultStyles['transition'] = true;
+  				}
+  			}
   		}
   	;
   if (s.length) {
@@ -318,7 +308,6 @@ require.register('style', function(module, exports, require) {
   
   // API
   exports.getPrefixed = getPrefixed;
-  exports.setPrefixed = setPrefixed;
   exports.getShorthand = getShorthand;
   exports.getAll = getAll;
   exports.expandShorthand = expandShorthand;
@@ -339,31 +328,9 @@ require.register('style', function(module, exports, require) {
    * @returns {String}
    */
   function getPrefixed (property) {
-  	return defaultStyles[prefix + property] || property;
-  }
-  
-  /**
-   * Store the vendor prefixed version of the property
-   * @param {String} property
-   */
-  function setPrefixed (property) {
-  	if (!prefixed[property]) {
-  		// Check if we have unprefixed prop
-  		if (defaultStyles[property]) {
-  			prefixed[property] = property;
-  			return;
-  		}
-  
-  		// Find prefixed version
-  		var vendor;
-  		for (var i = 0, n = VENDOR_PREFIXES.length; i < n; i++) {
-  			vendor = VENDOR_PREFIXES[i];
-  			if (defaultStyles[vendor + property]) {
-  				prefixed[property] = vendor + property;
-  				return;
-  			}
-  		}
-  	}
+  	return defaultStyles[prefix + property]
+  		? prefix + property
+  		: property;
   }
   
   /**
@@ -380,33 +347,30 @@ require.register('style', function(module, exports, require) {
   }
   
   /**
-   * Retrieve all possible versions of the property
+   * Retrieve all possible variations of the property
    * @param {String} property
    * @returns {Array}
    */
   function getAll (property) {
-  	var prefixes = []
-  		, vendor;
+  	var all = []
+  		, prefixed;
   
-  	prefixes.push(property);
+  	all.push(property);
   
   	// Handle shorthands
   	property = shorthand[property] || property;
   	if (isArray(property)) {
   		for (var i = 0, n = property.length; i < n; i++) {
-  			prefixes = prefixes.concat(getAll(property[i]))
+  			all = all.concat(getAll(property[i]))
   		}
   	}
   
-  	// Find all vendor prefixed
-  	for (var i = 0, n = VENDOR_PREFIXES.length; i < n; i++) {
-  		vendor = VENDOR_PREFIXES[i];
-  		if (defaultStyles[vendor + property]) {
-  			prefixes.push(vendor + property);
-  		}
+  	// Get vendor prefixed
+  	if ((prefixed = getPrefixed(property)) != property) {
+  		all.push(prefixed);
   	}
   
-  	return prefixes;
+  	return all;
   }
   
   /**
@@ -586,33 +550,16 @@ require.register('style', function(module, exports, require) {
    * @param {String} property
    */
   function clearStyle (element, property) {
-  	var isShorthand = shorthand[property] != null
-  		, isPrefixed = prefixed[property] != null
-  		, originalProp = property
-  		, match, re, style;
+  	var re, style;
   
   	property = getAll(property);
   
-  	// Loop through collection
-  	if (isArray(property)) {
-  		for (var i = 0, n = property.length; i < n; i++) {
-  			prop = property[i];
-  			clearStyle(element, prop);
-  		}
-  		// IE uses shorthand syntax when all longhand props have the same value, so remove shorthand too
-  		if (isShorthand) {
-  			property = originalProp;
-  		} else {
-  			return;
-  		}
-  	}
-  
   	style = element.getAttribute('style') || '';
-  	re = new RegExp('\\s?' + (getPrefixed(property)) + ':\\s[^;]+');
-  	match = re.exec(style);
-  	if (match != null) {
-  		element.setAttribute('style', style.replace(match + ';', ''));
-  	}
+  	console.log(style);
+  	re = new RegExp('(?:^|\\s)(?:' + property.join('|') + '):\\s[^;]+;', 'g');
+  	console.log(re)
+  	element.setAttribute('style', style.replace(re, ''));
+  	console.log(element.getAttribute('style'))
   }
   
   /**
