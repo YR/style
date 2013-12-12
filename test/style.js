@@ -231,25 +231,7 @@ require.register('style', function(module, exports, require) {
   	, win = window
   	, doc = window.document
   
-  		// Hash of prefixed versions of properties
-  		// (values to be replaced by platform specific property)
-  	, prefixed = {
-  			'border-bottom-left-radius': false,
-  			'border-bottom-right-radius': false,
-  			'border-top-left-radius': false,
-  			'border-top-right-radius': false,
-  			'box-shadow': false,
-  			'transform': false,
-  			'transform-origin': false,
-  			'transform-style': false,
-  			'transition-delay': false,
-  			'transition-duration': false,
-  			'transition-property': false,
-  			'transition-timing-function': false,
-  			'perspective': false,
-  			'perspective-origin': false
-  		}
-  		// Hash of exceptional unit values
+  		// Hash of unit values
   	, numeric = {
   			'top': 'px',
   			'bottom': 'px',
@@ -286,6 +268,7 @@ require.register('style', function(module, exports, require) {
   			'padding': ['padding-top', 'padding-right', 'padding-left', 'padding-bottom']
   		}
   	, defaultStyles = {}
+  	, prefix = ''
   
   	, RE_UNITS = /(px|%|em|ms|s)$/
   	, RE_IE_OPACITY = /opacity=(\d+)/i
@@ -293,14 +276,30 @@ require.register('style', function(module, exports, require) {
   	, VENDOR_PREFIXES = ['-webkit-', '-moz-', '-ms-', '-o-'];
   
   // Store all possible styles this platform supports
-  var s = current(doc.documentElement);
+  var s = current(doc.documentElement)
+  	, add = function (prop) {
+  			defaultStyles[prop] = true;
+  			// Grab the prefix style
+  			if (!prefix && prop.charAt(0) == '-') {
+  				prefix = /^-\w+-/.exec(prop)[0];
+  			}
+  			// Force inclusion of 'transition'
+  			if (prefix && ~prop.indexOf('transition')) {
+  				if (~prop.indexOf(prefix)) {
+  					defaultStyles[prefix + 'transition'] = true;
+  				} else {
+  					defaultStyles['transition'] = true;
+  				}
+  			}
+  		}
+  	;
   if (s.length) {
   	for (var i = 0, n = s.length; i < n; i++) {
-  		defaultStyles[s[i]] = true;
+  		add(s[i]);
   	}
   } else {
   	for (var prop in s) {
-  		defaultStyles[prop] = true;
+  		add(prop);
   	}
   }
   
@@ -309,8 +308,8 @@ require.register('style', function(module, exports, require) {
   
   // API
   exports.getPrefixed = getPrefixed;
-  exports.setPrefixed = setPrefixed;
   exports.getShorthand = getShorthand;
+  exports.getAll = getAll;
   exports.expandShorthand = expandShorthand;
   exports.parseOpacity = parseOpacity;
   exports.getOpacityValue = getOpacityValue;
@@ -319,6 +318,7 @@ require.register('style', function(module, exports, require) {
   exports.getNumericStyle = getNumericStyle;
   exports.setStyle = setStyle;
   exports.clearStyle = clearStyle;
+  exports.prefix = prefix;
   // CSS transitions feature test
   exports.hasTransitions = getPrefixed('transition-duration') !== false;
   
@@ -328,34 +328,9 @@ require.register('style', function(module, exports, require) {
    * @returns {String}
    */
   function getPrefixed (property) {
-  	// If property is prefixed, set if necessary and retrieve
-  	if (prefixed.hasOwnProperty(property)) {
-  		if (!prefixed[property]) setPrefixed(property);
-  		property = prefixed[property];
-  	}
-  	return property;
-  }
-  
-  /**
-   * Store the vendor prefixed version of the property
-   * @param {String} property
-   */
-  function setPrefixed (property) {
-  	// Check if we have unprefixed prop
-  	if (defaultStyles[property]) {
-  		prefixed[property] = property;
-  	}
-  	// Try prefixed version
-  	var vendor;
-  	for (var i = 0, n = VENDOR_PREFIXES.length; i < n; i++) {
-  		vendor = VENDOR_PREFIXES[i];
-  		if (!prefixed[property]) {
-  			if (defaultStyles[vendor + property]) {
-  				prefixed[property] = vendor + property;
-  				return;
-  			}
-  		}
-  	}
+  	return defaultStyles[prefix + property]
+  		? prefix + property
+  		: property;
   }
   
   /**
@@ -369,6 +344,33 @@ require.register('style', function(module, exports, require) {
   	} else {
   		return property;
   	}
+  }
+  
+  /**
+   * Retrieve all possible variations of the property
+   * @param {String} property
+   * @returns {Array}
+   */
+  function getAll (property) {
+  	var all = []
+  		, prefixed;
+  
+  	all.push(property);
+  
+  	// Handle shorthands
+  	property = shorthand[property] || property;
+  	if (isArray(property)) {
+  		for (var i = 0, n = property.length; i < n; i++) {
+  			all = all.concat(getAll(property[i]))
+  		}
+  	}
+  
+  	// Get vendor prefixed
+  	if ((prefixed = getPrefixed(property)) != property) {
+  		all.push(prefixed);
+  	}
+  
+  	return all;
   }
   
   /**
@@ -548,32 +550,16 @@ require.register('style', function(module, exports, require) {
    * @param {String} property
    */
   function clearStyle (element, property) {
-  	var isShorthand = shorthand[property] != null
-  		, shortProp = property
-  		, match, re, style;
+  	var re, style;
   
-  	property = shorthand[property] || property;
-  
-  	// Loop through collection
-  	if (isArray(property)) {
-  		for (var i = 0, n = property.length; i < n; i++) {
-  			prop = property[i];
-  			clearStyle(element, prop);
-  		}
-  		// IE uses shorthand syntax when all longhand props have the same value, so remove shorthand too
-  		if (isShorthand) {
-  			property = shortProp;
-  		} else {
-  			return;
-  		}
-  	}
+  	property = getAll(property);
   
   	style = element.getAttribute('style') || '';
-  	re = new RegExp('\\s?' + (getPrefixed(property)) + ':\\s[^;]+');
-  	match = re.exec(style);
-  	if (match != null) {
-  		element.setAttribute('style', style.replace(match + ';', ''));
-  	}
+  	console.log(style);
+  	re = new RegExp('(?:^|\\s)(?:' + property.join('|') + '):\\s[^;]+;', 'g');
+  	console.log(re)
+  	element.setAttribute('style', style.replace(re, ''));
+  	console.log(element.getAttribute('style'))
   }
   
   /**
@@ -602,7 +588,7 @@ require.register('style', function(module, exports, require) {
   /**
    * CamelCase string, removing '-'
    */
-  function camelCase(str) {
+  function camelCase (str) {
   	// TODO: check that IE doesn't capitalize -ms prefix
   	return str.replace(/-([a-z])/g, function($0, $1) {
   		return $1.toUpperCase();
