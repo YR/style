@@ -555,11 +555,8 @@ require.register('style', function(module, exports, require) {
   	property = getAll(property);
   
   	style = element.getAttribute('style') || '';
-  	console.log(style);
   	re = new RegExp('(?:^|\\s)(?:' + property.join('|') + '):\\s[^;]+;', 'g');
-  	console.log(re)
   	element.setAttribute('style', style.replace(re, ''));
-  	console.log(element.getAttribute('style'))
   }
   
   /**
