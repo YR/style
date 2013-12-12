@@ -22,7 +22,7 @@ var isObject = require('lodash.isobject')
 			'perspective': false,
 			'perspective-origin': false
 		}
-		// Hash of exceptional unit values
+		// Hash of unit values
 	, numeric = {
 			'top': 'px',
 			'bottom': 'px',
@@ -59,6 +59,7 @@ var isObject = require('lodash.isobject')
 			'padding': ['padding-top', 'padding-right', 'padding-left', 'padding-bottom']
 		}
 	, defaultStyles = {}
+	, prefix = ''
 
 	, RE_UNITS = /(px|%|em|ms|s)$/
 	, RE_IE_OPACITY = /opacity=(\d+)/i
@@ -66,14 +67,22 @@ var isObject = require('lodash.isobject')
 	, VENDOR_PREFIXES = ['-webkit-', '-moz-', '-ms-', '-o-'];
 
 // Store all possible styles this platform supports
-var s = current(doc.documentElement);
+var s = current(doc.documentElement)
+	, add = function (prop) {
+			defaultStyles[prop] = true;
+			// Grab the prefix style
+			if (!prefix && prop.charAt(0) == '-') {
+				prefix = /^-\w+-/.exec(prop)[0];
+			}
+		}
+	;
 if (s.length) {
 	for (var i = 0, n = s.length; i < n; i++) {
-		defaultStyles[s[i]] = true;
+		add(s[i]);
 	}
 } else {
 	for (var prop in s) {
-		defaultStyles[prop] = true;
+		add(prop);
 	}
 }
 
@@ -84,6 +93,7 @@ var opacity = !defaultStyles['opacity'] && defaultStyles['filter'] ? 'filter' : 
 exports.getPrefixed = getPrefixed;
 exports.setPrefixed = setPrefixed;
 exports.getShorthand = getShorthand;
+exports.getAll = getAll;
 exports.expandShorthand = expandShorthand;
 exports.parseOpacity = parseOpacity;
 exports.getOpacityValue = getOpacityValue;
@@ -92,6 +102,7 @@ exports.getStyle = getStyle;
 exports.getNumericStyle = getNumericStyle;
 exports.setStyle = setStyle;
 exports.clearStyle = clearStyle;
+exports.prefix = prefix;
 // CSS transitions feature test
 exports.hasTransitions = getPrefixed('transition-duration') !== false;
 
@@ -101,12 +112,7 @@ exports.hasTransitions = getPrefixed('transition-duration') !== false;
  * @returns {String}
  */
 function getPrefixed (property) {
-	// If property is prefixed, set if necessary and retrieve
-	if (prefixed.hasOwnProperty(property)) {
-		if (!prefixed[property]) setPrefixed(property);
-		property = prefixed[property];
-	}
-	return property;
+	return defaultStyles[prefix + property] || property;
 }
 
 /**
@@ -114,15 +120,17 @@ function getPrefixed (property) {
  * @param {String} property
  */
 function setPrefixed (property) {
-	// Check if we have unprefixed prop
-	if (defaultStyles[property]) {
-		prefixed[property] = property;
-	}
-	// Try prefixed version
-	var vendor;
-	for (var i = 0, n = VENDOR_PREFIXES.length; i < n; i++) {
-		vendor = VENDOR_PREFIXES[i];
-		if (!prefixed[property]) {
+	if (!prefixed[property]) {
+		// Check if we have unprefixed prop
+		if (defaultStyles[property]) {
+			prefixed[property] = property;
+			return;
+		}
+
+		// Find prefixed version
+		var vendor;
+		for (var i = 0, n = VENDOR_PREFIXES.length; i < n; i++) {
+			vendor = VENDOR_PREFIXES[i];
 			if (defaultStyles[vendor + property]) {
 				prefixed[property] = vendor + property;
 				return;
@@ -142,6 +150,36 @@ function getShorthand (property) {
 	} else {
 		return property;
 	}
+}
+
+/**
+ * Retrieve all possible versions of the property
+ * @param {String} property
+ * @returns {Array}
+ */
+function getAll (property) {
+	var prefixes = []
+		, vendor;
+
+	prefixes.push(property);
+
+	// Handle shorthands
+	property = shorthand[property] || property;
+	if (isArray(property)) {
+		for (var i = 0, n = property.length; i < n; i++) {
+			prefixes = prefixes.concat(getAll(property[i]))
+		}
+	}
+
+	// Find all vendor prefixed
+	for (var i = 0, n = VENDOR_PREFIXES.length; i < n; i++) {
+		vendor = VENDOR_PREFIXES[i];
+		if (defaultStyles[vendor + property]) {
+			prefixes.push(vendor + property);
+		}
+	}
+
+	return prefixes;
 }
 
 /**
@@ -322,10 +360,11 @@ function setStyle (element, property, value) {
  */
 function clearStyle (element, property) {
 	var isShorthand = shorthand[property] != null
-		, shortProp = property
+		, isPrefixed = prefixed[property] != null
+		, originalProp = property
 		, match, re, style;
 
-	property = shorthand[property] || property;
+	property = getAll(property);
 
 	// Loop through collection
 	if (isArray(property)) {
@@ -335,7 +374,7 @@ function clearStyle (element, property) {
 		}
 		// IE uses shorthand syntax when all longhand props have the same value, so remove shorthand too
 		if (isShorthand) {
-			property = shortProp;
+			property = originalProp;
 		} else {
 			return;
 		}
@@ -375,7 +414,7 @@ function current (element, property) {
 /**
  * CamelCase string, removing '-'
  */
-function camelCase(str) {
+function camelCase (str) {
 	// TODO: check that IE doesn't capitalize -ms prefix
 	return str.replace(/-([a-z])/g, function($0, $1) {
 		return $1.toUpperCase();
