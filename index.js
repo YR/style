@@ -323,13 +323,15 @@ function setStyle (element, property, value) {
  * @param {String} property
  */
 function clearStyle (element, property) {
-	var re, style;
+	var style = element.getAttribute('style') || ''
+		, re;
 
-	property = getAll(property);
+	if (style) {
+		property = getAll(property).join('[\\w-]*|') + '[\\w-]*';
 
-	style = element.getAttribute('style') || '';
-	re = new RegExp('(?:^|\\s)(?:' + property.join('|') + '):\\s[^;]+;', 'g');
-	element.setAttribute('style', style.replace(re, ''));
+		re = new RegExp('(?:^|\\s)(?:' + property + '):\\s[^;]+;', 'g');
+		element.setAttribute('style', style.replace(re, ''));
+	}
 }
 
 /**

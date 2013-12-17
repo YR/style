@@ -168,7 +168,10 @@ describe('style', function () {
 				'height': 100
 			});
 			style.clearStyle(element, 'float');
-			expect(element.getAttribute('style')).not.to.contain('float');
+			var styl = element.getAttribute('style');
+			expect(styl).not.to.contain('float');
+			expect(styl).to.contain('width');
+			expect(styl).to.contain('height');
 		});
 		it('should completely remove a prefixed style rule from a setStyle() call', function () {
 			style.setStyle(element, {
@@ -177,7 +180,10 @@ describe('style', function () {
 				'height': 100
 			});
 			style.clearStyle(element, 'transition');
-			expect(element.getAttribute('style')).not.to.contain('transition');
+			var styl = element.getAttribute('style');
+			expect(styl).not.to.contain('transition');
+			expect(styl).to.contain('width');
+			expect(styl).to.contain('height');
 		});
 		it('should completely remove a shorthand style rule from a setStyle() call', function () {
 			style.setStyle(element, {
@@ -186,7 +192,10 @@ describe('style', function () {
 				'height': 100
 			});
 			style.clearStyle(element, 'border-radius');
-			expect(element.getAttribute('style')).not.to.contain('border-radius');
+			var styl = element.getAttribute('style');
+			expect(styl).not.to.contain('border-radius');
+			expect(styl).to.contain('width');
+			expect(styl).to.contain('height');
 		});
 	});
 
