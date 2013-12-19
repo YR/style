@@ -236,16 +236,13 @@ describe('style', function () {
 			style.setStyle(element, 'width', '200px');
 			expect(element.style['width']).to.equal('200px');
 		});
-	});
-
-	describe('opacity styles', function () {
-		it('should return a float when Opacity is set to a float value', function () {
-			style.setStyle(element, 'opacity', 0.5);
-			expect(style.getStyle(element, 'opacity')).to.equal(0.5);
+		it('should set transform property', function () {
+			style.setStyle(element, 'transform', 'translate(100px, 100px)');
+			expect(element.style[style.getPrefixed('transform')]).to.equal('translate(100px, 100px)');
 		});
-		it('should return a float when Opacity is set to a string value', function () {
-			style.setStyle(element, 'opacity', '0.5');
-			expect(style.getStyle(element, 'opacity')).to.equal(0.5);
+		it('should set special transform shortcut properties', function () {
+			style.setStyle(element, 'translateX', '100px');
+			expect(element.style[style.getPrefixed('transform')]).to.equal('translateX(100px)');
 		});
 	});
 

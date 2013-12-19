@@ -1,3 +1,5 @@
+// TODO: handle setting special shortcut transform properties with arrays (translate, scale)?
+
 var isObject = require('lodash.isobject')
 	, isNan = require('lodash.isnan')
 	, isArray = require('lodash.isarray')
@@ -27,7 +29,19 @@ var isObject = require('lodash.isobject')
 			'border-top-right-radius': 'px',
  			'transition-duration': 'ms',
  			'opacity': '',
-			'font-size': 'px'
+			'font-size': 'px',
+			'translateX': 'px',
+			'translateY': 'px',
+			'translateZ': 'px',
+			'scaleX': '',
+			'scaleY': '',
+			'scaleZ': '',
+			'rotate': 'deg',
+			'rotateX': 'deg',
+			'rotateY': 'deg',
+			'rotateZ': 'deg',
+			'skewX': 'px',
+			'skewY': 'px'
 		}
 	, colour = {
 			'background-color': true,
@@ -404,34 +418,41 @@ function getNumericStyle (element, property) {
  * @param {Object} value
  */
 function setStyle (element, property, value) {
+	var prop;
+
 	// Expand shorthands
-	property = expandShorthand(property, value);
+	prop = expandShorthand(property, value);
 	// Handle property hash returned from expandShorthand
-	if (isObject(property)) {
-		for (var prop in property) {
-			setStyle(element, prop, property[prop]);
+	if (isObject(prop)) {
+		for (var p in prop) {
+			setStyle(element, p, prop[p]);
 		}
 		return;
 	}
 
-	// Fix opacity
-	if (property === 'opacity') {
-		property = opacity;
+	// Handle opacity
+	if (prop === 'opacity') {
+		prop = opacity;
 		value = getOpacityValue(value);
 	}
-
-	// Look up prefixed property
-	property = getPrefixed(property);
 
 	// Look up default numeric unit if none provided
 	if (value !== 'auto'
 		&& value !== 'inherit'
-		&& numeric[property]
+		&& numeric[prop]
 		&& !RE_UNITS.test(value)) {
-			value += numeric[property];
+			value += numeric[prop];
 	}
 
-	element.style[camelCase(property)] = value;
+	// Handle special transform properties
+	if (transform[property] && numeric[property] != null) {
+		value = property + '(' + value + ')';
+	}
+
+	// Look up prefixed property
+	prop = getPrefixed(prop);
+
+	element.style[camelCase(prop)] = value;
 }
 
 /**
