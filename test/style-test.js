@@ -182,7 +182,9 @@ describe('style', function () {
 		it('should return an array composed of value and unit for "rotate"', function () {
 			element.style[style.getPrefixed('transform')] = 'rotate(45deg)';
 			if (style.hasTransforms) {
-				expect(style.getNumericStyle(element, 'rotate')).to.eql([45, 'deg']);
+				var val = style.getNumericStyle(element, 'rotate');
+				expect(Math.round(val[0])).to.eql(45);
+				expect(val[1]).to.eql('deg');
 			} else {
 				expect(style.getNumericStyle(element, 'rotate')).to.eql(null);
 			}
