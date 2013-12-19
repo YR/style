@@ -296,6 +296,12 @@ function parseNumber (value, property) {
 	}
 }
 
+/**
+ * Retrieve a 'property' from a transform 2d or 3d matrix 'value'
+ * @param {String|Array} value
+ * @param {String} property
+ * @returns {String|Number|Array}
+ */
 function parseTransform (value, property) {
 	var re, matrix;
 
@@ -414,7 +420,7 @@ function getNumericStyle (element, property) {
 /**
  * Set the style for 'property'
  * @param {Element} element
- * @param {String} property
+ * @param {String|Object} property
  * @param {Object} value
  */
 function setStyle (element, property, value) {
@@ -496,7 +502,9 @@ function current (element, property) {
 }
 
 /**
- * CamelCase string, removing '-'
+ * CamelCase 'str, removing '-'
+ * @param {String} str
+ * @returns {String}
  */
 function camelCase (str) {
 	// TODO: check that IE doesn't capitalize -ms prefix

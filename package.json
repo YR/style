@@ -13,52 +13,11 @@
     "mocha": "*",
     "expect.js": "*",
     "buddy": "*",
-    "simple-browser-require": "*",
-    "blanket": "*"
+    "simple-browser-require": "*"
   },
   "main": "index.js",
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/yr/style.git"
-  },
-  "testling": {
-    "harness": "mocha-bdd",
-    "files": "test/style-test.js",
-    "browsers": {
-      "ie": [
-        9,
-        10
-      ],
-      "firefox": [
-        13,
-        17,
-        20,
-        25
-      ],
-      "chrome": [
-        20,
-        25,
-        30,
-        31
-      ],
-      "opera": [
-        17
-      ],
-      "safari": [
-        5.1,
-        6
-      ],
-      "iphone": [
-        6
-      ],
-      "ipad": [
-        6
-      ],
-      "android-browser": [
-        4.2
-      ]
-    }
-  },
+  "repository": "https://github.com/yr/style.git",
+  "license": "MIT",
   "scripts": {
     "test": "buddy build && mocha-phantomjs test/test-runner.html"
   },
