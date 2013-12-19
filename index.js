@@ -1,6 +1,7 @@
 var isObject = require('lodash.isobject')
 	, isNan = require('lodash.isnan')
 	, isArray = require('lodash.isarray')
+	, map = require('lodash.map')
 	, win = window
 	, doc = window.document
 
@@ -40,12 +41,38 @@ var isObject = require('lodash.isobject')
 			'margin': ['margin-top', 'margin-right', 'margin-left', 'margin-bottom'],
 			'padding': ['padding-top', 'padding-right', 'padding-left', 'padding-bottom']
 		}
+		// Hash of transform properties
+	, transform = {
+			'transform': true,
+			'translate': true,
+			'translateX': true,
+			'translateY': true,
+			'translate3d': true,
+			'translateZ': true,
+			'rotate': true,
+			'rotate3d': true,
+			'rotateX': true,
+			'rotateY': true,
+			'rotateZ': true,
+			'scale': true,
+			'scaleX': true,
+			'scaleY': true,
+			'scale3d': true,
+			'scaleZ': true,
+			'skewX': true,
+			'skewY': true,
+			'perspective': true,
+			'matrix': true,
+			'matrix3d': true
+		}
+
 	, defaultStyles = {}
 	, prefix = ''
 
 	, RE_UNITS = /(px|%|em|ms|s)$/
 	, RE_IE_OPACITY = /opacity=(\d+)/i
 	, RE_RGB = /rgb\((\d+),\s?(\d+),\s?(\d+)\)/
+	, RE_MATRIX = /^matrix(?:3d)?\(([^\)]+)/
 	, VENDOR_PREFIXES = ['-webkit-', '-moz-', '-ms-', '-o-'];
 
 // Store all possible styles this platform supports
@@ -64,8 +91,7 @@ var s = current(doc.documentElement)
 					defaultStyles['transition'] = true;
 				}
 			}
-		}
-	;
+		};
 if (s.length) {
 	for (var i = 0, n = s.length; i < n; i++) {
 		add(s[i]);
@@ -87,13 +113,15 @@ exports.expandShorthand = expandShorthand;
 exports.parseOpacity = parseOpacity;
 exports.getOpacityValue = getOpacityValue;
 exports.parseNumber = parseNumber;
+exports.parseTransform = parseTransform;
 exports.getStyle = getStyle;
 exports.getNumericStyle = getNumericStyle;
 exports.setStyle = setStyle;
 exports.clearStyle = clearStyle;
 exports.prefix = prefix;
-// CSS transitions feature test
-exports.hasTransitions = getPrefixed('transition-duration') !== false;
+// CSS# feature tests
+exports.hasTransitions = getPrefixed('transition-duration') in defaultStyles;
+exports.hasTransforms = getPrefixed('transform') in defaultStyles;
 
 /**
  * Retrieve the vendor prefixed version of the property
@@ -101,6 +129,11 @@ exports.hasTransitions = getPrefixed('transition-duration') !== false;
  * @returns {String}
  */
 function getPrefixed (property) {
+	// Handle transform property shortcuts
+	if (transform[property]) {
+		property = 'transform';
+	}
+
 	return defaultStyles[prefix + property]
 		? prefix + property
 		: property;
@@ -238,6 +271,74 @@ function parseNumber (value, property) {
 	}
 }
 
+function parseTransform (value, property) {
+	var re, matrix;
+
+	if (isArray(value)) {
+		matrix = value;
+	} else if (re = value.match(RE_MATRIX)) {
+		// Convert string to array
+		matrix = re[1].split(', ')
+			.map(function (item) {
+				return parseFloat(item);
+			});
+	}
+
+	if (matrix) {
+		switch (property) {
+			case 'matrix':
+			case 'matrix3d':
+				return matrix;
+			case 'translateX':
+				return ''
+					+ matrix[(matrix.length > 6) ? 12 : 4]
+					+ 'px';
+			case 'translateY':
+				return ''
+					+ matrix[(matrix.length > 6) ? 13 : 5]
+					+ 'px';
+			case 'translateZ':
+				return ''
+					+ ((matrix.length > 6) ? matrix[14] : 0)
+					+ 'px';
+			case 'translate':
+				return [parseTransform(matrix, 'translateX'), parseTransform(matrix, 'translateY')];
+			case 'translate3d':
+				return [parseTransform(matrix, 'translateX'), parseTransform(matrix, 'translateY'), parseTransform(matrix, 'translateZ')];
+			case 'scaleX':
+				return matrix[0];
+			case 'scaleY':
+				return matrix[(matrix.length > 6) ? 5 : 3];
+			case 'scaleZ':
+				return matrix.length > 6 ? matrix[10] : 1;
+			case 'scale':
+				return [parseTransform(matrix, 'scaleX'), parseTransform(matrix, 'scaleY')];
+			case 'scale3d':
+				return [parseTransform(matrix, 'scaleX'), parseTransform(matrix, 'scaleY'), parseTransform(matrix, 'scaleZ')];
+			case 'rotate':
+			case 'rotateY':
+			case 'rotateZ':
+				return ''
+					+ (Math.acos(matrix[0]) * 180) / Math.PI
+					+ 'deg';
+			case 'rotateX':
+				return ''
+					+ (Math.acos(matrix[5]) * 180) / Math.PI
+					+ 'deg';
+			case 'skewX':
+				return ''
+					+ (Math.atan(matrix[2]) * 180) / Math.PI
+					+ 'deg';
+			case 'skewY':
+				return ''
+					+ (Math.atan(matrix[1]) * 180) / Math.PI
+					+ 'deg';
+		}
+	} else {
+		return value;
+	}
+}
+
 /**
  * Retrieve the style for 'property'
  * @param {Element} element
@@ -245,7 +346,7 @@ function parseNumber (value, property) {
  * @returns {Object}
  */
 function getStyle (element, property) {
-	var value;
+	var prop, value;
 
 	// Special case for opacity
 	if (property === 'opacity') {
@@ -253,11 +354,16 @@ function getStyle (element, property) {
 	}
 
 	// Retrieve longhand and prefixed version
-	property = getPrefixed(getShorthand(property));
-	value = current(element, property);
+	prop = getPrefixed(getShorthand(property));
+	value = current(element, prop);
 	// Try property camelCase if no result
 	if (value == null) {
-		value = current(element, camelCase(property));
+		value = current(element, camelCase(prop));
+	}
+
+	// Special case for transform
+	if (transform[property]) {
+		return parseTransform(value, property);
 	}
 
 	switch (value) {

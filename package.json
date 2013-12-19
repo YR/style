@@ -6,7 +6,8 @@
   "dependencies": {
     "lodash.isobject": "~2.3.0",
     "lodash.isarray": "~2.3.0",
-    "lodash.isnan": "~2.3.0"
+    "lodash.isnan": "~2.3.0",
+    "lodash.map": "~2.3.0"
   },
   "devDependencies": {
     "mocha": "*",

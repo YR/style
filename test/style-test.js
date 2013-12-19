@@ -11,62 +11,140 @@ try {
 }
 
 describe('style', function () {
-	describe('helper functions', function () {
-		describe('getPrefixed()', function () {
-			it('should return a prefixed property name when passed the non-prefixed version', function () {
-				var prop = style.getPrefixed('transition-duration');
-				if (prop != 'transition-duration') {
-					expect(prop).to.contain(style.prefix);
-				} else {
-					expect(prop).to.eql('transition-duration');
-				}
-			});
+	describe('getPrefixed()', function () {
+		it('should return a prefixed property name when passed the non-prefixed version', function () {
+			var prop = style.getPrefixed('transition-duration');
+			if (style.prefix) {
+				expect(prop).to.equal(style.prefix + 'transition-duration');
+			} else {
+				expect(prop).to.equal('transition-duration');
+			}
 		});
-
-		describe('getAll()', function () {
-			it('should return an array of all possible property names', function () {
-				var props = style.getAll('border-radius');
-				expect(props).to.contain('border-radius');
-				expect(props.length).to.be.greaterThan(4);
-			});
+		it('should return the correct transform property when passed a transform shortcut', function () {
+			var prop = style.getPrefixed('translate');
+			if (style.prefix) {
+				expect(prop).to.equal(style.prefix + 'transform');
+			} else {
+				expect(prop).to.equal('transform');
+			}
 		});
+	});
 
-		describe('parseNumber()', function () {
-			it('should return a unit property of "%" when passed a percentage value', function () {
-				expect(style.parseNumber('100%')[1]).to.eql('%');
-			});
-			it('should return a unit property of "px" when passed a number value with no unit', function () {
-				expect(style.parseNumber(100)[1]).to.eql('px');
-			});
-			it('should return a unit property of "px" when passed a numeric string value with no unit', function () {
-				expect(style.parseNumber('100')[1]).to.eql('px');
-			});
-			it('should return a unit property of "" when passed a string with no unit', function () {
-				expect(style.parseNumber('left')[1]).to.eql('');
-			});
-			it('should return a num property that is a Number when passed a number as string', function () {
-				expect(style.parseNumber('100px')[0]).to.eql(100);
-			});
-			it('should return the original value when passed a non-numeric string', function () {
-				expect(style.parseNumber('float')[0]).to.eql('float');
-			});
+	describe('getAll()', function () {
+		it('should return an array of all possible property names', function () {
+			var props = style.getAll('border-radius');
+			expect(props).to.contain('border-radius');
+			expect(props.length).to.be.greaterThan(4);
 		});
+	});
 
-		describe('getShorthand()', function () {
-			it('should return a longhand property', function () {
-				expect(style.getShorthand('margin')).to.eql('margin-top');
-			});
+	describe('parseNumber()', function () {
+		it('should return a unit property of "%" when passed a percentage value', function () {
+			expect(style.parseNumber('100%')[1]).to.equal('%');
 		});
+		it('should return a unit property of "px" when passed a number value with no unit', function () {
+			expect(style.parseNumber(100)[1]).to.equal('px');
+		});
+		it('should return a unit property of "px" when passed a numeric string value with no unit', function () {
+			expect(style.parseNumber('100')[1]).to.equal('px');
+		});
+		it('should return a unit property of "" when passed a string with no unit', function () {
+			expect(style.parseNumber('left')[1]).to.equal('');
+		});
+		it('should return a num property that is a Number when passed a number as string', function () {
+			expect(style.parseNumber('100px')[0]).to.equal(100);
+		});
+		it('should return the original value when passed a non-numeric string', function () {
+			expect(style.parseNumber('float')[0]).to.equal('float');
+		});
+	});
 
-		describe('expandShorthand()', function () {
-			var props;
-			props = style.expandShorthand('margin', '10px');
-			it('should return an array of longhand properties', function () {
-				expect(props).to.have.property('margin-top');
-				expect(props).to.have.property('margin-bottom');
-				expect(props).to.have.property('margin-left');
-				expect(props).to.have.property('margin-left');
-			});
+	describe('parseTransform', function () {
+		it('should return the passed value when not passed a transfrom matrix string or array', function () {
+			expect(style.parseTransform('17px', 'perspective')).to.equal('17px');
+		});
+		it('should return a matrix array when passed a 2d transfrom matrix array and property "matrix"', function () {
+			expect(style.parseTransform([1, 0, 0, 1, 0, 0], 'matrix')).to.eql([1,0,0,1,0,0]);
+		});
+		it('should return a matrix array when passed a 2d transfrom matrix string and property "matrix"', function () {
+			expect(style.parseTransform('matrix(1, 0, 0, 1, 0, 0)', 'matrix')).to.eql([1,0,0,1,0,0]);
+		});
+		it('should return a matrix array when passed a 3d transfrom matrix string and property "matrix3d"', function () {
+			expect(style.parseTransform('matrix3d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1)', 'matrix3d')).to.eql([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1]);
+		});
+		it('should return a pixel value when passed a 2d transform matrix string and property "translateX"', function () {
+			expect(style.parseTransform('matrix(1, 0, 0, 1, 100, 0)', 'translateX')).to.equal('100px');
+		});
+		it('should return a pixel value when passed a 3d transform matrix string and property "translateX"', function () {
+			expect(style.parseTransform('matrix3d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 100, 0, 0, 1)', 'translateX')).to.equal('100px');
+		});
+		it('should return a pixel value when passed a 2d transform matrix string and property "translateY"', function () {
+			expect(style.parseTransform('matrix(1, 0, 0, 1, 0, 100)', 'translateY')).to.equal('100px');
+		});
+		it('should return a pixel value when passed a 3d transform matrix string and property "translateY"', function () {
+			expect(style.parseTransform('matrix3d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 100, 0, 1)', 'translateY')).to.equal('100px');
+		});
+		it('should return a pixel value when passed a 3d transform matrix string and property "translateZ"', function () {
+			expect(style.parseTransform('matrix3d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 100, 1)', 'translateZ')).to.equal('100px');
+		});
+		it('should return 0 when passed a 2d transform matrix string and property "translateZ"', function () {
+			expect(style.parseTransform('matrix(1, 0, 0, 1, 0, 0)', 'translateZ')).to.equal('0px');
+		});
+		it('should return an array of pixel values when passed a 2d transform matrix string and property "translate"', function () {
+			expect(style.parseTransform('matrix(1, 0, 0, 1, 100, 100)', 'translate')).to.eql(['100px', '100px']);
+		});
+		it('should return an array of pixel values when passed a 3d transform matrix string and property "translate3d"', function () {
+			expect(style.parseTransform('matrix3d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 100, 100, 100, 1)', 'translate3d')).to.eql(['100px', '100px', '100px']);
+		});
+		it('should return a numeric value when passed a 2d transform matrix string and property "scaleX"', function () {
+			expect(style.parseTransform('matrix(0.5, 0, 0, 0.5, 0, 0)', 'scaleX')).to.equal(0.5);
+		});
+		it('should return a numeric value when passed a 2d transform matrix string and property "scaleY"', function () {
+			expect(style.parseTransform('matrix(1, 0, 0, 0.5, 0, 0)', 'scaleY')).to.equal(0.5);
+		});
+		it('should return a numeric value when passed a 3d transform matrix string and property "scaleZ"', function () {
+			expect(style.parseTransform('matrix3d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 1)', 'scaleZ')).to.equal(0.5);
+		});
+		it('should return 1 when passed a 2d transform matrix string and property "scaleZ"', function () {
+			expect(style.parseTransform('matrix(1, 0, 0, 1, 0, 0)', 'scaleZ')).to.equal(1);
+		});
+		it('should return an array of numeric values when passed a 2d transform matrix string and property "scale"', function () {
+			expect(style.parseTransform('matrix(0.5, 0, 0, 0.5, 0, 0)', 'scale')).to.eql([0.5, 0.5]);
+		});
+		it('should return an array of numeric values when passed a 3d transform matrix string and property "scale3d"', function () {
+			expect(style.parseTransform('matrix3d(0.5, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 1)', 'scale3d')).to.eql([0.5, 0.5, 0.5]);
+		});
+		it('should return a degree value when passed a 2d transform matrix string and property "rotate"', function () {
+			expect(style.parseTransform('matrix(0.7071067811865476, 0.7071067811865475, -0.7071067811865475, 0.7071067811865476, 0, 0)', 'rotate')).to.equal('45deg');
+		});
+		it('should return a degree value when passed a 3d transform matrix string and property "rotateX"', function () {
+			expect(style.parseTransform('matrix3d(1, 0, 0, 0, 0, 0.7071067811865476, 0.7071067811865475, 0, 0, -0.7071067811865475, 0.7071067811865476, 0, 0, 0, 0, 1)', 'rotateX')).to.equal('45deg');
+		});
+		it('should return a degree value when passed a 3d transform matrix string and property "rotateY"', function () {
+			expect(style.parseTransform('matrix3d(0.7071067811865476, 0, -0.7071067811865475, 0, 0, 1, 0, 0, 0.7071067811865475, 0, 0.7071067811865476, 0, 0, 0, 0, 1)', 'rotateY')).to.equal('45deg');
+		});
+		it('should return a degree value when passed a 2d transform matrix string and property "skewX"', function () {
+			expect(style.parseTransform('matrix(1, 0, 0.9999999999999999, 1, 0, 0)', 'skewX')).to.equal('45deg');
+		});
+		it('should return a degree value when passed a 2d transform matrix string and property "skewY"', function () {
+			expect(style.parseTransform('matrix(1, 0.9999999999999999, 0, 1, 0, 0)', 'skewY')).to.equal('45deg');
+		});
+	});
+
+	describe('getShorthand()', function () {
+		it('should return a longhand property', function () {
+			expect(style.getShorthand('margin')).to.equal('margin-top');
+		});
+	});
+
+	describe('expandShorthand()', function () {
+		var props;
+		props = style.expandShorthand('margin', '10px');
+		it('should return an array of longhand properties', function () {
+			expect(props).to.have.property('margin-top');
+			expect(props).to.have.property('margin-bottom');
+			expect(props).to.have.property('margin-left');
+			expect(props).to.have.property('margin-left');
 		});
 	});
 
@@ -79,11 +157,19 @@ describe('style', function () {
 			document.body.removeChild(element);
 		});
 		it('should return the default for an unset style', function () {
-			expect(style.getStyle(element, 'display')).to.eql('block');
+			expect(style.getStyle(element, 'display')).to.equal('block');
 		});
 		it('should return the style for a set style', function () {
 			element.style['display'] = 'inline';
-			expect(style.getStyle(element, 'display')).to.eql('inline');
+			expect(style.getStyle(element, 'display')).to.equal('inline');
+		});
+		it('should return a value for a set transform style', function () {
+			element.style[style.getPrefixed('transform')] = 'translateX(100px)';
+			if (style.hasTransforms) {
+				expect(style.getStyle(element, 'translateX')).to.equal('100px');
+			} else {
+				expect(style.getStyle(element, 'translateX')).to.equal(null);
+			}
 		});
 	});
 
@@ -97,7 +183,7 @@ describe('style', function () {
 		});
 		it('should set the correct element style', function () {
 			style.setStyle(element, 'float', 'left');
-			expect(element.style['float']).to.eql('left');
+			expect(element.style['float']).to.equal('left');
 		});
 		it('should set the correct element style when passed a group of properties', function () {
 			style.setStyle(element, {
@@ -105,33 +191,33 @@ describe('style', function () {
 				'width': '100px',
 				'height': 100
 			});
-			expect(element.style['width']).to.eql('100px');
+			expect(element.style['width']).to.equal('100px');
 		});
 		it('should set all expanded styles for a shorthand property', function () {
 			style.setStyle(element, 'margin', '10px');
-			expect(element.style['marginTop']).to.eql('10px');
-			expect(element.style['marginBottom']).to.eql('10px');
-			expect(element.style['marginLeft']).to.eql('10px');
-			expect(element.style['marginRight']).to.eql('10px');
+			expect(element.style['marginTop']).to.equal('10px');
+			expect(element.style['marginBottom']).to.equal('10px');
+			expect(element.style['marginLeft']).to.equal('10px');
+			expect(element.style['marginRight']).to.equal('10px');
 		});
 		it('should set a numeric unit for all expanded styles of a shorthand property without unit', function () {
 			style.setStyle(element, 'padding', 10);
-			expect(element.style['paddingTop']).to.eql('10px');
-			expect(element.style['paddingBottom']).to.eql('10px');
-			expect(element.style['paddingLeft']).to.eql('10px');
-			expect(element.style['paddingRight']).to.eql('10px');
+			expect(element.style['paddingTop']).to.equal('10px');
+			expect(element.style['paddingBottom']).to.equal('10px');
+			expect(element.style['paddingLeft']).to.equal('10px');
+			expect(element.style['paddingRight']).to.equal('10px');
 		});
 		it('should replace an existing style value', function () {
 			element.style['float'] = 'left';
 			style.setStyle(element, 'float', 'right');
-			expect(element.style['float']).to.eql('right');
+			expect(element.style['float']).to.equal('right');
 		});
 		it('should replace an existing style value when many styles are set', function () {
 			element.style['float'] = 'left';
 			element.style['width'] = '100px';
 			element.style['height'] = '100px';
 			style.setStyle(element, 'width', '200px');
-			expect(element.style['width']).to.eql('200px');
+			expect(element.style['width']).to.equal('200px');
 		});
 	});
 
@@ -145,11 +231,11 @@ describe('style', function () {
 		});
 		it('should return a float when Opacity is set to a float value', function () {
 			style.setStyle(element, 'opacity', 0.5);
-			expect(style.getStyle(element, 'opacity')).to.eql(0.5);
+			expect(style.getStyle(element, 'opacity')).to.equal(0.5);
 		});
 		it('should return a float when Opacity is set to a string value', function () {
 			style.setStyle(element, 'opacity', '0.5');
-			expect(style.getStyle(element, 'opacity')).to.eql(0.5);
+			expect(style.getStyle(element, 'opacity')).to.equal(0.5);
 		});
 	});
 
@@ -196,12 +282,6 @@ describe('style', function () {
 			expect(styl).not.to.contain('border-radius');
 			expect(styl).to.contain('width');
 			expect(styl).to.contain('height');
-		});
-	});
-
-	describe('hasTransitions', function () {
-		it('should return true if platform supports css transitions, and false if it does not', function () {
-			expect(style.hasTransitions === true || style.hasTransitions === false).to.be(true);
 		});
 	});
 });
