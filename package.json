@@ -1,7 +1,7 @@
 {
   "name": "style",
   "description": "Cross-browser style manipulation",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "author": "Alexander Pope <alexander.pope@nrk.no>",
   "dependencies": {
     "lodash.isobject": "~2.3.0",
