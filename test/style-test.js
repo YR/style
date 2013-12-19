@@ -11,7 +11,15 @@ try {
 }
 
 describe('style', function () {
-	describe('getPrefixed()', function () {
+	beforeEach(function () {
+		element = document.createElement('div');
+		document.body.appendChild(element);
+	});
+	afterEach(function () {
+		document.body.removeChild(element);
+	});
+
+	describe('getPrefixed', function () {
 		it('should return a prefixed property name when passed the non-prefixed version', function () {
 			var prop = style.getPrefixed('transition-duration');
 			if (style.prefix) {
@@ -30,7 +38,7 @@ describe('style', function () {
 		});
 	});
 
-	describe('getAll()', function () {
+	describe('getAll', function () {
 		it('should return an array of all possible property names', function () {
 			var props = style.getAll('border-radius');
 			expect(props).to.contain('border-radius');
@@ -38,7 +46,7 @@ describe('style', function () {
 		});
 	});
 
-	describe('parseNumber()', function () {
+	describe('parseNumber', function () {
 		it('should return a unit property of "%" when passed a percentage value', function () {
 			expect(style.parseNumber('100%')[1]).to.equal('%');
 		});
@@ -131,13 +139,13 @@ describe('style', function () {
 		});
 	});
 
-	describe('getShorthand()', function () {
+	describe('getShorthand', function () {
 		it('should return a longhand property', function () {
 			expect(style.getShorthand('margin')).to.equal('margin-top');
 		});
 	});
 
-	describe('expandShorthand()', function () {
+	describe('expandShorthand', function () {
 		var props;
 		props = style.expandShorthand('margin', '10px');
 		it('should return an array of longhand properties', function () {
@@ -148,14 +156,7 @@ describe('style', function () {
 		});
 	});
 
-	describe('getStyle()', function () {
-		beforeEach(function () {
-			element = document.createElement('div');
-			document.body.appendChild(element);
-		});
-		afterEach(function () {
-			document.body.removeChild(element);
-		});
+	describe('getStyle', function () {
 		it('should return the default for an unset style', function () {
 			expect(style.getStyle(element, 'display')).to.equal('block');
 		});
@@ -163,7 +164,7 @@ describe('style', function () {
 			element.style['display'] = 'inline';
 			expect(style.getStyle(element, 'display')).to.equal('inline');
 		});
-		it('should return a value for a set transform style', function () {
+		it('should return a value for a set "translate" style', function () {
 			element.style[style.getPrefixed('transform')] = 'translateX(100px)';
 			if (style.hasTransforms) {
 				expect(style.getStyle(element, 'translateX')).to.equal('100px');
@@ -173,14 +174,30 @@ describe('style', function () {
 		});
 	});
 
-	describe('setStyle()', function () {
-		beforeEach(function () {
-			element = document.createElement('div');
-			document.body.appendChild(element);
+	describe('getNumericStyle', function () {
+		it('should return an array composed of value and unit', function () {
+			element.style['height'] = '100px';
+			expect(style.getNumericStyle(element, 'height')).to.eql([100, 'px']);
 		});
-		afterEach(function () {
-			document.body.removeChild(element);
+		it('should return an array composed of value and unit for "rotate"', function () {
+			element.style[style.getPrefixed('transform')] = 'rotate(45deg)';
+			if (style.hasTransforms) {
+				expect(style.getNumericStyle(element, 'rotate')).to.eql([45, 'deg']);
+			} else {
+				expect(style.getNumericStyle(element, 'rotate')).to.eql(null);
+			}
 		});
+		it('should return multiple arrays composed of value and unit for "translate"', function () {
+			element.style[style.getPrefixed('transform')] = 'translate(100px, 100px)';
+			if (style.hasTransforms) {
+				expect(style.getNumericStyle(element, 'translate')).to.eql([[100, 'px'], [100, 'px']]);
+			} else {
+				expect(style.getNumericStyle(element, 'translate')).to.eql(null);
+			}
+		});
+	});
+
+	describe('setStyle', function () {
 		it('should set the correct element style', function () {
 			style.setStyle(element, 'float', 'left');
 			expect(element.style['float']).to.equal('left');
@@ -222,13 +239,6 @@ describe('style', function () {
 	});
 
 	describe('opacity styles', function () {
-		beforeEach(function () {
-			element = document.createElement('div');
-			document.body.appendChild(element);
-		});
-		afterEach(function () {
-			document.body.removeChild(element);
-		});
 		it('should return a float when Opacity is set to a float value', function () {
 			style.setStyle(element, 'opacity', 0.5);
 			expect(style.getStyle(element, 'opacity')).to.equal(0.5);
@@ -239,14 +249,7 @@ describe('style', function () {
 		});
 	});
 
-	describe('clearStyle()', function () {
-		beforeEach(function () {
-			element = document.createElement('div');
-			document.body.appendChild(element);
-		});
-		afterEach(function () {
-			document.body.removeChild(element);
-		});
+	describe('clearStyle', function () {
 		it('should completely remove the style rule from a setStyle() call', function () {
 			style.setStyle(element, {
 				'float': 'left',

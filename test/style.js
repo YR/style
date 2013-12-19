@@ -1572,7 +1572,7 @@ require.register('style', function(module, exports, require) {
   	, defaultStyles = {}
   	, prefix = ''
   
-  	, RE_UNITS = /(px|%|em|ms|s)$/
+  	, RE_UNITS = /(px|%|em|ms|s|deg)$/
   	, RE_IE_OPACITY = /opacity=(\d+)/i
   	, RE_RGB = /rgb\((\d+),\s?(\d+),\s?(\d+)\)/
   	, RE_MATRIX = /^matrix(?:3d)?\(([^\)]+)/
@@ -1741,6 +1741,17 @@ require.register('style', function(module, exports, require) {
    */
   function parseNumber (value, property) {
   	var channels, num, unit, unitTest;
+  
+  	if (value == null) {
+  		return null;
+  	}
+  
+  	// Handle arrays of values (translate, scale)
+  	if (isArray(value)) {
+  		return map(value, function (val) {
+  			return parseNumber(val, property);
+  		});
+  	}
   
   	// Handle colours
   	if (colour[property]) {
