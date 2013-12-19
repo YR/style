@@ -283,5 +283,29 @@ describe('style', function () {
 			expect(styl).to.contain('width');
 			expect(styl).to.contain('height');
 		});
+		it('should completly remove a transform style rule from a setStyle() call', function () {
+			style.setStyle(element, {
+				'transform': 'translate(100px, 100px)',
+				'width': 100,
+				'height': 100
+			});
+			style.clearStyle(element, 'transform');
+			var styl = element.getAttribute('style');
+			expect(styl).not.to.contain('transform');
+			expect(styl).to.contain('width');
+			expect(styl).to.contain('height');
+		});
+		it('should completly remove a special shortcut transform style rule from a setStyle() call', function () {
+			style.setStyle(element, {
+				'translateX': 100,
+				'width': 100,
+				'height': 100
+			});
+			style.clearStyle(element, 'translateX');
+			var styl = element.getAttribute('style');
+			expect(styl).not.to.contain('translateX');
+			expect(styl).to.contain('width');
+			expect(styl).to.contain('height');
+		});
 	});
 });
