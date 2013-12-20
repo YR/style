@@ -316,6 +316,11 @@ describe('style', function () {
 			style.setStyle(element, 'translateX', '100px');
 			expect(window.getComputedStyle(element).getPropertyValue(style.getPrefixed('transform'))).to.equal('matrix(1, 0, 0, 1, 100, 100)');
 		});
+		it('should overwrite existing transform properties of the same type when setting special transform shortcut properties', function () {
+			style.setStyle(element, 'translateY', '100px');
+			style.setStyle(element, 'translateY', '200px');
+			expect(window.getComputedStyle(element).getPropertyValue(style.getPrefixed('transform'))).to.equal('matrix(1, 0, 0, 1, 0, 200)');
+		});
 	});
 
 	describe('clearStyle', function () {
