@@ -50,6 +50,7 @@ style.setStyle(el, 'width', 100); // 'px' used by default
 style.setStyle(el, {top: '10px', left: '10%'});
 style.setStyle(el, 'border-radius', '4px'); // properties are vendor prefixed if necessary
 style.setStyle(el, 'scaleX', 0.5); // transform properties can be called directly
+style.setStyle(el, 'translate', [100, 100]); // grouped transforms can also be called directly
 ```
 
 **clearStyle(element, property)**: remove a previously set style for `property`
