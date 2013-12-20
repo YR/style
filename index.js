@@ -3,6 +3,7 @@
 var isObject = require('lodash.isobject')
 	, isNan = require('lodash.isnan')
 	, isArray = require('lodash.isarray')
+	, isString = require('lodash.isstring')
 	, map = require('lodash.map')
 	, win = window
 	, doc = window.document
