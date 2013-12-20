@@ -388,10 +388,6 @@ function getStyle (element, property) {
 	// Retrieve longhand and prefixed version
 	prop = getPrefixed(getShorthand(property));
 	value = current(element, prop);
-	// Try property camelCase if no result
-	if (value == null) {
-		value = current(element, camelCase(prop));
-	}
 
 	// Special case for transform
 	if (transform[property]) {
@@ -486,16 +482,24 @@ function clearStyle (element, property) {
  * @returns {String}
  */
 function current (element, property) {
+	var value;
+
 	if (win.getComputedStyle) {
 		if (property) {
-			return win.getComputedStyle(element).getPropertyValue(property);
+			value = win.getComputedStyle(element).getPropertyValue(property);
+			// Try with camel casing
+			if (value == null) win.getComputedStyle(element).getPropertyValue(camelCase(property));
+			return value;
 		} else {
 			return win.getComputedStyle(element);
 		}
 	// IE
 	} else {
 		if (property) {
-			return element.currentStyle[property];
+			value = element.currentStyle[property];
+			// Try with camel casing
+			if (value == null) element.currentStyle[camelCase(property)];
+			return value;
 		} else {
 			return element.currentStyle;
 		}
