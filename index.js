@@ -88,7 +88,23 @@ var isObject = require('lodash.isobject')
 	, RE_IE_OPACITY = /opacity=(\d+)/i
 	, RE_RGB = /rgb\((\d+),\s?(\d+),\s?(\d+)\)/
 	, RE_MATRIX = /^matrix(?:3d)?\(([^\)]+)/
-	, VENDOR_PREFIXES = ['-webkit-', '-moz-', '-ms-', '-o-'];
+	, VENDOR_PREFIXES = ['-webkit-', '-moz-', '-ms-', '-o-']
+	, MATRIX2D_IDENTITY = [1, 0, 0, 1, 0, 0]
+	, MATRIX3D_IDENTITY = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
+	, MATRIX_PROPERTY_INDEX = {
+		translateX: [4,12],
+		translateY: [5,13],
+		translateZ: [null,14],
+		scaleX: [0,0],
+		scaleY: [3,5],
+		scaleZ: [null,10],
+		rotate: [0,0],
+		rotateX: [5,5],
+		rotateY: [0,0],
+		rotateZ: [null,0],
+		skewY: [1,1],
+		skewX: [2,2]
+	};
 
 // Store all possible styles this platform supports
 var s = current(doc.documentElement)
@@ -298,51 +314,38 @@ function parseNumber (value, property) {
 }
 
 /**
- * Retrieve a 'property' from a transform 2d or 3d matrix 'value'
- * @param {String|Array} value
+ * Retrieve a 'property' from a transform 2d or 3d 'matrix'
+ * @param {String|Array} matrix
  * @param {String} property
  * @returns {String|Number|Array}
  */
-function parseTransform (value, property) {
-	var re, matrix;
+function parseTransform (matrix, property) {
+	var m = matrixStringToArray(matrix)
+		, is3D = (m && m.length > 6) ? 1 : 0;
 
-	if (isArray(value)) {
-		matrix = value;
-	} else if (re = value.match(RE_MATRIX)) {
-		// Convert string to array
-		matrix = re[1].split(', ')
-			.map(function (item) {
-				return parseFloat(item);
-			});
-	}
-
-	if (matrix) {
+	if (m) {
 		switch (property) {
 			case 'matrix':
 			case 'matrix3d':
-				return matrix;
+				return m;
 			case 'translateX':
-				return ''
-					+ matrix[(matrix.length > 6) ? 12 : 4]
-					+ 'px';
 			case 'translateY':
 				return ''
-					+ matrix[(matrix.length > 6) ? 13 : 5]
+					+ m[MATRIX_PROPERTY_INDEX[property][is3D]]
 					+ 'px';
 			case 'translateZ':
 				return ''
-					+ ((matrix.length > 6) ? matrix[14] : 0)
+					+ (is3D ? m[MATRIX_PROPERTY_INDEX[property][is3D]] : '0')
 					+ 'px';
 			case 'translate':
 				return [parseTransform(matrix, 'translateX'), parseTransform(matrix, 'translateY')];
 			case 'translate3d':
 				return [parseTransform(matrix, 'translateX'), parseTransform(matrix, 'translateY'), parseTransform(matrix, 'translateZ')];
 			case 'scaleX':
-				return matrix[0];
 			case 'scaleY':
-				return matrix[(matrix.length > 6) ? 5 : 3];
+				return m[MATRIX_PROPERTY_INDEX[property][is3D]];
 			case 'scaleZ':
-				return matrix.length > 6 ? matrix[10] : 1;
+				return is3D ? m[10] : 1;
 			case 'scale':
 				return [parseTransform(matrix, 'scaleX'), parseTransform(matrix, 'scaleY')];
 			case 'scale3d':
@@ -351,23 +354,64 @@ function parseTransform (value, property) {
 			case 'rotateY':
 			case 'rotateZ':
 				return ''
-					+ (Math.acos(matrix[0]) * 180) / Math.PI
+					+ (Math.acos(m[0]) * 180) / Math.PI
 					+ 'deg';
 			case 'rotateX':
 				return ''
-					+ (Math.acos(matrix[5]) * 180) / Math.PI
+					+ (Math.acos(m[5]) * 180) / Math.PI
 					+ 'deg';
 			case 'skewX':
 				return ''
-					+ (Math.atan(matrix[2]) * 180) / Math.PI
+					+ (Math.atan(m[2]) * 180) / Math.PI
 					+ 'deg';
 			case 'skewY':
 				return ''
-					+ (Math.atan(matrix[1]) * 180) / Math.PI
+					+ (Math.atan(m[1]) * 180) / Math.PI
 					+ 'deg';
 		}
+	}
+
+	return matrix;
+}
+
+/**
+ * Convert a matrix property to a transform style string
+ * Handles existing transforms and special grouped properties
+ * @param {Element} element
+ * @param {String} property
+ * @param {String|Array} value
+ * @returns {String}
+ */
+function generateTransform (element, property, value) {
+	var matrix = current(element, getPrefixed(property)) + ' '
+		, is3D = matrix && matrix.length > 6;
+
+	if (matrix == 'none ') matrix = '';
+
+	if (numeric[property] != null) {
+		return matrix + property + '(' + value + ')';
 	} else {
-		return value;
+		switch (property) {
+			case 'transform':
+			case 'transform3d':
+				return value;
+			case 'translate':
+			case 'translate3d':
+				if (isArray(value)) {
+					// Add default unit
+					value = map(value, function(item) {
+						return !isString(item) ? item + 'px': item;
+					})
+					.join(', ');
+				}
+				return matrix + property + '(' + value + ')';
+			case 'scale':
+			case 'scale3d':
+				if (isArray(value)) {
+					value = value.join(', ');
+				}
+				return matrix + property + '(' + value + ')';
+		}
 	}
 }
 
@@ -421,7 +465,7 @@ function getNumericStyle (element, property) {
  * @param {Object} value
  */
 function setStyle (element, property, value) {
-	var prop;
+	var prop, matrix;
 
 	// Expand shorthands
 	prop = expandShorthand(property, value);
@@ -447,13 +491,13 @@ function setStyle (element, property, value) {
 			value += numeric[prop];
 	}
 
-	// Handle special transform properties
-	if (transform[property] && numeric[property] != null) {
-		value = property + '(' + value + ')';
-	}
-
 	// Look up prefixed property
 	prop = getPrefixed(prop);
+
+	// Handle special transform properties
+	if (transform[property]) {
+		value = generateTransform(element, property, value);
+	}
 
 	element.style[camelCase(prop)] = value;
 }
@@ -516,4 +560,21 @@ function camelCase (str) {
 	return str.replace(/-([a-z])/g, function($0, $1) {
 		return $1.toUpperCase();
 	}).replace('-', '');
+}
+
+/**
+ * Convert 'matrix' to Array
+ * @param {String|Array} matrix
+ * @returns {Array}
+ */
+function matrixStringToArray (matrix) {
+	if (isArray(matrix)) {
+		return matrix;
+	} else if (re = matrix.match(RE_MATRIX)) {
+		// Convert string to array
+		return re[1].split(', ')
+			.map(function (item) {
+				return parseFloat(item);
+			});
+	}
 }
