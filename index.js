@@ -549,9 +549,9 @@ function setStyle (element, property, value) {
 	prop = getPrefixed(prop);
 
 	// Handle special transform properties
+	// TODO: bulk multiple transforms?
 	if (transform[property]) {
 		value = generateTransform(element, property, value);
-		// console.log(value)
 	}
 
 	element.style[camelCase(prop)] = value;
