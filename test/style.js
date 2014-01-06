@@ -1632,8 +1632,7 @@ require.register('style', function(module, exports, require) {
   	, RE_RGB = /rgb\((\d+),\s?(\d+),\s?(\d+)\)/
   	, RE_MATRIX = /^matrix(?:3d)?\(([^\)]+)/
   	, VENDOR_PREFIXES = ['-webkit-', '-moz-', '-ms-', '-o-']
-  	, MATRIX2D_IDENTITY = [1, 0, 0, 1, 0, 0]
-  	, MATRIX3D_IDENTITY = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
+  	, MATRIX_IDENTITY = [[1, 0, 0, 1, 0, 0], [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]]
   	, MATRIX_PROPERTY_INDEX = {
   		translateX: [4,12],
   		translateY: [5,13],
@@ -1642,8 +1641,8 @@ require.register('style', function(module, exports, require) {
   		scaleY: [3,5],
   		scaleZ: [null,10],
   		rotate: [0,0],
-  		rotateX: [5,5],
-  		rotateY: [0,0],
+  		rotateX: [null,5],
+  		rotateY: [null,0],
   		rotateZ: [null,0],
   		skewY: [1,1],
   		skewX: [2,2]
@@ -1926,18 +1925,63 @@ require.register('style', function(module, exports, require) {
    * @returns {String}
    */
   function generateTransform (element, property, value) {
-  	var matrix = current(element, getPrefixed(property)) + ' '
-  		, is3D = matrix && matrix.length > 6;
+  	var matrix = current(element, getPrefixed(property))
+  		, m, m1, is3D, idx, len;
   
-  	if (matrix == 'none ') matrix = '';
+  	if (matrix == 'none') matrix = '';
+  
+  	// Reset existing matrix, preserving translations
+  	if (matrix) {
+  		if (m = matrixStringToArray(matrix)) {
+  			is3D = m.length > 6 ? 1 : 0;
+  			len = is3D ? 3 : 2;
+  			idx = is3D ? 12 : 4;
+  			// Preserve translations
+  			if (!(~property.indexOf('translate'))) {
+  				m1 = MATRIX_IDENTITY[is3D].slice(0, idx)
+  					.concat(m.slice(idx, idx + len));
+  				if (is3D) m1.push(MATRIX_IDENTITY[is3D].slice(-1));
+  				m = m1;
+  			// Preserve translations and nullify changed
+  			} else {
+  				if (property == 'translate' || property == 'translate3d') {
+  					m1 = m.slice(0, idx)
+  						.concat(MATRIX_IDENTITY[is3D].slice(idx, idx + len));
+  					if (is3D) m1.push(m.slice(-1));
+  					m = m1;
+  				} else if (property == 'translateX' || property == 'translateY' || property == 'translateZ') {
+  					idx = MATRIX_PROPERTY_INDEX[property][is3D];
+  					if (idx) m[idx] = MATRIX_IDENTITY[is3D][idx];
+  				}
+  			}
+  
+  			matrix = is3D ? 'matrix3d' : 'matrix'
+  				+ '('
+  				+ m.join(', ')
+  				+ ') ';
+  		}
+  	}
   
   	if (numeric[property] != null) {
-  		return matrix + property + '(' + value + ')';
+  		return ''
+  			+ matrix
+  			+ property
+  			+ '('
+  			+ value
+  			+ ')';
+  	// Grouped properties
   	} else {
   		switch (property) {
   			case 'transform':
   			case 'transform3d':
   				return value;
+  			case 'matrix':
+  			case 'matrix3d':
+  				return ''
+  					+ property
+  					+ '('
+  					+ value
+  					+ ')';
   			case 'translate':
   			case 'translate3d':
   				if (isArray(value)) {
@@ -1947,13 +1991,23 @@ require.register('style', function(module, exports, require) {
   					})
   					.join(', ');
   				}
-  				return matrix + property + '(' + value + ')';
+  				return ''
+  					+ matrix
+  					+ property
+  					+ '('
+  					+ value
+  					+ ')';
   			case 'scale':
   			case 'scale3d':
   				if (isArray(value)) {
   					value = value.join(', ');
   				}
-  				return matrix + property + '(' + value + ')';
+  				return ''
+  					+ matrix
+  					+ property
+  					+ '('
+  					+ value
+  					+ ')';
   		}
   	}
   }
@@ -2040,6 +2094,7 @@ require.register('style', function(module, exports, require) {
   	// Handle special transform properties
   	if (transform[property]) {
   		value = generateTransform(element, property, value);
+  		// console.log(value)
   	}
   
   	element.style[camelCase(prop)] = value;

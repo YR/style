@@ -139,39 +139,6 @@ describe('style', function () {
 		});
 	});
 
-	// describe.only('mergeTransform', function () {
-	// 	it('should return a new matrix string when passed property "matrix"', function () {
-	// 		expect(style.mergeTransform('matrix(1, 0, 0, 1, 0, 0)', 'matrix', [1, 0, 0, 1, 100, 0])).to.equal('matrix(1, 0, 0, 1, 100, 0)');
-	// 	});
-	// 	it('should return a new matrix3d string when passed a "matrix3d" property', function () {
-	// 		expect(style.mergeTransform('matrix3d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)', 'matrix', [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 100, 0, 0, 1])).to.equal('matrix3d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 100, 0, 0, 1)');
-	// 	});
-	// 	it('should return a new matrix string when passed a string "translateX" property', function () {
-	// 		expect(style.mergeTransform('matrix(1, 0, 0, 1, 0, 0)', 'translateX', '100px')).to.equal('matrix(1, 0, 0, 1, 100, 0)');
-	// 	});
-	// 	it('should return a new matrix string when passed a numeric "translateX" property', function () {
-	// 		expect(style.mergeTransform('matrix(1, 0, 0, 1, 0, 0)', 'translateX', 100)).to.equal('matrix(1, 0, 0, 1, 100, 0)');
-	// 	});
-	// 	it('should return a new matrix string when passed a string "translateY" property', function () {
-	// 		expect(style.mergeTransform('matrix(1, 0, 0, 1, 0, 0)', 'translateY', '100px')).to.equal('matrix(1, 0, 0, 1, 0, 100)');
-	// 	});
-	// 	it('should return a new matrix3d string when passed a string "translateZ" property', function () {
-	// 		expect(style.mergeTransform('matrix(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)', 'translateZ', '100px')).to.equal('matrix3d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 100px, 1)');
-	// 	});
-	// 	it('should return a new matrix3d string when passed a string "translateZ" property and a 2d initial matrix', function () {
-	// 		expect(style.mergeTransform('matrix(1, 0, 0, 1, 0, 0)', 'translateZ', '100px')).to.equal('matrix3d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 100px, 1)');
-	// 	});
-	// 	it('should return a new matrix string when passed array property "translate"', function () {
-	// 		expect(style.mergeTransform('matrix(1, 0, 0, 1, 0, 0)', 'translate', [100, 100])).to.equal('matrix(1, 0, 0, 1, 100px, 100px)');
-	// 	});
-	// 	it('should return the original matrix string when passed a non-array property "translate"', function () {
-	// 		expect(style.mergeTransform('matrix(1, 0, 0, 1, 0, 0)', 'translate', 100)).to.equal('matrix(1, 0, 0, 1, 0, 0)');
-	// 	});
-	// 	it('should return a new matrix3d string when passed array property "translate3d"', function () {
-	// 		expect(style.mergeTransform('matrix(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)', 'translate3d', [100, 100, 100])).to.equal('matrix3d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 100px, 100px, 100px, 1)');
-	// 	});
-	// });
-
 	describe('getShorthand', function () {
 		it('should return a longhand property', function () {
 			expect(style.getShorthand('margin')).to.equal('margin-top');
@@ -311,15 +278,40 @@ describe('style', function () {
 			style.setStyle(element, 'scale3d', [0.5, 0.5, 0.5]);
 			expect(element.style[style.getPrefixed('transform')]).to.equal('scale3d(0.5, 0.5, 0.5)');
 		});
-		it('should preserve existing transform properties when setting special transform shortcut properties', function () {
+		it('should preserve existing translation transform properties when setting special translation transform shortcut properties', function () {
 			style.setStyle(element, 'translateY', '100px');
 			style.setStyle(element, 'translateX', '100px');
 			expect(window.getComputedStyle(element).getPropertyValue(style.getPrefixed('transform'))).to.equal('matrix(1, 0, 0, 1, 100, 100)');
 		});
-		it('should overwrite existing transform properties of the same type when setting special transform shortcut properties', function () {
+		it('should preserve existing translation transform properties when setting special non-translation transform shortcut properties', function () {
 			style.setStyle(element, 'translateY', '100px');
-			style.setStyle(element, 'translateY', '200px');
+			style.setStyle(element, 'scale', [0.5,0.5]);
+			expect(window.getComputedStyle(element).getPropertyValue(style.getPrefixed('transform'))).to.equal('matrix(0.5, 0, 0, 0.5, 0, 100)');
+		});
+		it('should preserve existing non-translation transform properties when setting special translation transform shortcut properties', function () {
+			style.setStyle(element, 'scale', [0.5,0.5]);
+			style.setStyle(element, 'translateY', '100px');
+			expect(window.getComputedStyle(element).getPropertyValue(style.getPrefixed('transform'))).to.equal('matrix(0.5, 0, 0, 0.5, 0, 50)');
+		});
+		it('should preserve existing 2d translation transform properties when setting special 3d translation transform shortcut properties', function () {
+			style.setStyle(element, 'translateY', '100px');
+			style.setStyle(element, 'translateZ', '200px');
+			expect(window.getComputedStyle(element).getPropertyValue(style.getPrefixed('transform'))).to.equal('matrix3d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 100, 200, 1)');
+		});
+		it('should overwrite existing translation transform properties of the same type when setting special translation transform shortcut properties', function () {
+			style.setStyle(element, 'translateY', '100px');
+			style.setStyle(element, 'translateY', 200);
 			expect(window.getComputedStyle(element).getPropertyValue(style.getPrefixed('transform'))).to.equal('matrix(1, 0, 0, 1, 0, 200)');
+		});
+		it('should overwrite existing translation transform properties of the same type when setting special grouped translation transform shortcut properties', function () {
+			style.setStyle(element, 'translateY', '100px');
+			style.setStyle(element, 'translate', [100, 200]);
+			expect(window.getComputedStyle(element).getPropertyValue(style.getPrefixed('transform'))).to.equal('matrix(1, 0, 0, 1, 100, 200)');
+		});
+		it('should overwrite existing non-translation transform properties when setting special non-translation transform shortcut properties', function () {
+			style.setStyle(element, 'rotate', '45deg');
+			style.setStyle(element, 'scale', [0.5, 0.5]);
+			expect(window.getComputedStyle(element).getPropertyValue(style.getPrefixed('transform'))).to.equal('matrix(0.5, 0, 0, 0.5, 0, 0)');
 		});
 	});
 
