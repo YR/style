@@ -1,6 +1,6 @@
 require.register('lodash._objecttypes', function(module, exports, require) {
   /**
-   * Lo-Dash 2.3.0 (Custom Build) <http://lodash.com/>
+   * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
    * Build: `lodash modularize modern exports="npm" -o ./npm/`
    * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
    * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
@@ -23,7 +23,7 @@ require.register('lodash._objecttypes', function(module, exports, require) {
 });
 require.register('lodash.isobject', function(module, exports, require) {
   /**
-   * Lo-Dash 2.3.0 (Custom Build) <http://lodash.com/>
+   * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
    * Build: `lodash modularize modern exports="npm" -o ./npm/`
    * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
    * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
@@ -65,7 +65,7 @@ require.register('lodash.isobject', function(module, exports, require) {
 });
 require.register('lodash.isnumber', function(module, exports, require) {
   /**
-   * Lo-Dash 2.3.0 (Custom Build) <http://lodash.com/>
+   * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
    * Build: `lodash modularize modern exports="npm" -o ./npm/`
    * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
    * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
@@ -107,7 +107,7 @@ require.register('lodash.isnumber', function(module, exports, require) {
 });
 require.register('lodash.isnan', function(module, exports, require) {
   /**
-   * Lo-Dash 2.3.0 (Custom Build) <http://lodash.com/>
+   * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
    * Build: `lodash modularize modern exports="npm" -o ./npm/`
    * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
    * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
@@ -150,9 +150,9 @@ require.register('lodash.isnan', function(module, exports, require) {
   module.exports = isNaN;
   
 });
-require.register('lodash._renative', function(module, exports, require) {
+require.register('lodash._isnative', function(module, exports, require) {
   /**
-   * Lo-Dash 2.3.0 (Custom Build) <http://lodash.com/>
+   * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
    * Build: `lodash modularize modern exports="npm" -o ./npm/`
    * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
    * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
@@ -173,19 +173,30 @@ require.register('lodash._renative', function(module, exports, require) {
       .replace(/toString| for [^\]]+/g, '.*?') + '$'
   );
   
-  module.exports = reNative;
+  /**
+   * Checks if `value` is a native function.
+   *
+   * @private
+   * @param {*} value The value to check.
+   * @returns {boolean} Returns `true` if the `value` is a native function, else `false`.
+   */
+  function isNative(value) {
+    return typeof value == 'function' && reNative.test(value);
+  }
+  
+  module.exports = isNative;
   
 });
 require.register('lodash.isarray', function(module, exports, require) {
   /**
-   * Lo-Dash 2.3.0 (Custom Build) <http://lodash.com/>
+   * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
    * Build: `lodash modularize modern exports="npm" -o ./npm/`
    * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
    * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
    * Copyright 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
    * Available under MIT license <http://lodash.com/license>
    */
-  var reNative = require('lodash._renative');
+  var isNative = require('lodash._isnative');
   
   /** `Object#toString` result shortcuts */
   var arrayClass = '[object Array]';
@@ -197,7 +208,7 @@ require.register('lodash.isarray', function(module, exports, require) {
   var toString = objectProto.toString;
   
   /* Native method shortcuts for methods with the same name as other `lodash` methods */
-  var nativeIsArray = reNative.test(nativeIsArray = Array.isArray) && nativeIsArray;
+  var nativeIsArray = isNative(nativeIsArray = Array.isArray) && nativeIsArray;
   
   /**
    * Checks if `value` is an array.
@@ -226,7 +237,7 @@ require.register('lodash.isarray', function(module, exports, require) {
 });
 require.register('lodash.isstring', function(module, exports, require) {
   /**
-   * Lo-Dash 2.3.0 (Custom Build) <http://lodash.com/>
+   * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
    * Build: `lodash modularize modern exports="npm" -o ./npm/`
    * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
    * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
@@ -266,7 +277,7 @@ require.register('lodash.isstring', function(module, exports, require) {
 });
 require.register('lodash.noop', function(module, exports, require) {
   /**
-   * Lo-Dash 2.3.0 (Custom Build) <http://lodash.com/>
+   * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
    * Build: `lodash modularize modern exports="npm" -o ./npm/`
    * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
    * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
@@ -295,19 +306,19 @@ require.register('lodash.noop', function(module, exports, require) {
 });
 require.register('lodash._basecreate', function(module, exports, require) {
   /**
-   * Lo-Dash 2.3.0 (Custom Build) <http://lodash.com/>
+   * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
    * Build: `lodash modularize modern exports="npm" -o ./npm/`
    * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
    * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
    * Copyright 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
    * Available under MIT license <http://lodash.com/license>
    */
-  var isObject = require('lodash.isobject'),
-      noop = require('lodash.noop'),
-      reNative = require('lodash._renative');
+  var isNative = require('lodash._isnative'),
+      isObject = require('lodash.isobject'),
+      noop = require('lodash.noop');
   
   /* Native method shortcuts for methods with the same name as other `lodash` methods */
-  var nativeCreate = reNative.test(nativeCreate = Object.create) && nativeCreate;
+  var nativeCreate = isNative(nativeCreate = Object.create) && nativeCreate;
   
   /**
    * The base implementation of `_.create` without support for assigning
@@ -340,15 +351,15 @@ require.register('lodash._basecreate', function(module, exports, require) {
 });
 require.register('lodash._setbinddata', function(module, exports, require) {
   /**
-   * Lo-Dash 2.3.0 (Custom Build) <http://lodash.com/>
+   * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
    * Build: `lodash modularize modern exports="npm" -o ./npm/`
    * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
    * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
    * Copyright 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
    * Available under MIT license <http://lodash.com/license>
    */
-  var noop = require('lodash.noop'),
-      reNative = require('lodash._renative');
+  var isNative = require('lodash._isnative'),
+      noop = require('lodash.noop');
   
   /** Used as the property descriptor for `__bindData__` */
   var descriptor = {
@@ -363,7 +374,7 @@ require.register('lodash._setbinddata', function(module, exports, require) {
     // IE 8 only accepts DOM elements
     try {
       var o = {},
-          func = reNative.test(func = Object.defineProperty) && func,
+          func = isNative(func = Object.defineProperty) && func,
           result = func(o, o, o) && func;
     } catch(e) { }
     return result;
@@ -384,70 +395,9 @@ require.register('lodash._setbinddata', function(module, exports, require) {
   module.exports = setBindData;
   
 });
-require.register('lodash._basebind', function(module, exports, require) {
-  /**
-   * Lo-Dash 2.3.0 (Custom Build) <http://lodash.com/>
-   * Build: `lodash modularize modern exports="npm" -o ./npm/`
-   * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
-   * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
-   * Copyright 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
-   * Available under MIT license <http://lodash.com/license>
-   */
-  var baseCreate = require('lodash._basecreate'),
-      isObject = require('lodash.isobject'),
-      setBindData = require('lodash._setbinddata');
-  
-  /**
-   * Used for `Array` method references.
-   *
-   * Normally `Array.prototype` would suffice, however, using an array literal
-   * avoids issues in Narwhal.
-   */
-  var arrayRef = [];
-  
-  /** Native method shortcuts */
-  var push = arrayRef.push;
-  
-  /**
-   * The base implementation of `_.bind` that creates the bound function and
-   * sets its meta data.
-   *
-   * @private
-   * @param {Array} bindData The bind data array.
-   * @returns {Function} Returns the new bound function.
-   */
-  function baseBind(bindData) {
-    var func = bindData[0],
-        partialArgs = bindData[2],
-        thisArg = bindData[4];
-  
-    function bound() {
-      // `Function#bind` spec
-      // http://es5.github.io/#x15.3.4.5
-      if (partialArgs) {
-        var args = partialArgs.slice();
-        push.apply(args, arguments);
-      }
-      // mimic the constructor's `return` behavior
-      // http://es5.github.io/#x13.2.2
-      if (this instanceof bound) {
-        // ensure `new bound` is an instance of `func`
-        var thisBinding = baseCreate(func.prototype),
-            result = func.apply(thisBinding, args || arguments);
-        return isObject(result) ? result : thisBinding;
-      }
-      return func.apply(thisArg, args || arguments);
-    }
-    setBindData(bound, bindData);
-    return bound;
-  }
-  
-  module.exports = baseBind;
-  
-});
 require.register('lodash._slice', function(module, exports, require) {
   /**
-   * Lo-Dash 2.3.0 (Custom Build) <http://lodash.com/>
+   * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
    * Build: `lodash modularize modern exports="npm" -o ./npm/`
    * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
    * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
@@ -486,9 +436,74 @@ require.register('lodash._slice', function(module, exports, require) {
   module.exports = slice;
   
 });
+require.register('lodash._basebind', function(module, exports, require) {
+  /**
+   * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
+   * Build: `lodash modularize modern exports="npm" -o ./npm/`
+   * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
+   * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
+   * Copyright 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+   * Available under MIT license <http://lodash.com/license>
+   */
+  var baseCreate = require('lodash._basecreate'),
+      isObject = require('lodash.isobject'),
+      setBindData = require('lodash._setbinddata'),
+      slice = require('lodash._slice');
+  
+  /**
+   * Used for `Array` method references.
+   *
+   * Normally `Array.prototype` would suffice, however, using an array literal
+   * avoids issues in Narwhal.
+   */
+  var arrayRef = [];
+  
+  /** Native method shortcuts */
+  var push = arrayRef.push;
+  
+  /**
+   * The base implementation of `_.bind` that creates the bound function and
+   * sets its meta data.
+   *
+   * @private
+   * @param {Array} bindData The bind data array.
+   * @returns {Function} Returns the new bound function.
+   */
+  function baseBind(bindData) {
+    var func = bindData[0],
+        partialArgs = bindData[2],
+        thisArg = bindData[4];
+  
+    function bound() {
+      // `Function#bind` spec
+      // http://es5.github.io/#x15.3.4.5
+      if (partialArgs) {
+        // avoid `arguments` object deoptimizations by using `slice` instead
+        // of `Array.prototype.slice.call` and not assigning `arguments` to a
+        // variable as a ternary expression
+        var args = slice(partialArgs);
+        push.apply(args, arguments);
+      }
+      // mimic the constructor's `return` behavior
+      // http://es5.github.io/#x13.2.2
+      if (this instanceof bound) {
+        // ensure `new bound` is an instance of `func`
+        var thisBinding = baseCreate(func.prototype),
+            result = func.apply(thisBinding, args || arguments);
+        return isObject(result) ? result : thisBinding;
+      }
+      return func.apply(thisArg, args || arguments);
+    }
+    setBindData(bound, bindData);
+    return bound;
+  }
+  
+  module.exports = baseBind;
+  
+});
 require.register('lodash._basecreatewrapper', function(module, exports, require) {
   /**
-   * Lo-Dash 2.3.0 (Custom Build) <http://lodash.com/>
+   * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
    * Build: `lodash modularize modern exports="npm" -o ./npm/`
    * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
    * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
@@ -536,7 +551,7 @@ require.register('lodash._basecreatewrapper', function(module, exports, require)
     function bound() {
       var thisBinding = isBind ? thisArg : this;
       if (partialArgs) {
-        var args = partialArgs.slice();
+        var args = slice(partialArgs);
         push.apply(args, arguments);
       }
       if (partialRightArgs || isCurry) {
@@ -569,7 +584,7 @@ require.register('lodash._basecreatewrapper', function(module, exports, require)
 });
 require.register('lodash.isfunction', function(module, exports, require) {
   /**
-   * Lo-Dash 2.3.0 (Custom Build) <http://lodash.com/>
+   * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
    * Build: `lodash modularize modern exports="npm" -o ./npm/`
    * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
    * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
@@ -599,7 +614,7 @@ require.register('lodash.isfunction', function(module, exports, require) {
 });
 require.register('lodash._createwrapper', function(module, exports, require) {
   /**
-   * Lo-Dash 2.3.0 (Custom Build) <http://lodash.com/>
+   * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
    * Build: `lodash modularize modern exports="npm" -o ./npm/`
    * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
    * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
@@ -608,7 +623,8 @@ require.register('lodash._createwrapper', function(module, exports, require) {
    */
   var baseBind = require('lodash._basebind'),
       baseCreateWrapper = require('lodash._basecreatewrapper'),
-      isFunction = require('lodash.isfunction');
+      isFunction = require('lodash.isfunction'),
+      slice = require('lodash._slice');
   
   /**
    * Used for `Array` method references.
@@ -619,7 +635,8 @@ require.register('lodash._createwrapper', function(module, exports, require) {
   var arrayRef = [];
   
   /** Native method shortcuts */
-  var push = arrayRef.push;
+  var push = arrayRef.push,
+      unshift = arrayRef.unshift;
   
   /**
    * Creates a function that, when called, either curries or invokes `func`
@@ -664,8 +681,14 @@ require.register('lodash._createwrapper', function(module, exports, require) {
     }
     var bindData = func && func.__bindData__;
     if (bindData && bindData !== true) {
-      bindData = bindData.slice();
-  
+      // clone `bindData`
+      bindData = slice(bindData);
+      if (bindData[2]) {
+        bindData[2] = slice(bindData[2]);
+      }
+      if (bindData[3]) {
+        bindData[3] = slice(bindData[3]);
+      }
       // set `thisBinding` is not previously bound
       if (isBind && !(bindData[1] & 1)) {
         bindData[4] = thisArg;
@@ -684,7 +707,7 @@ require.register('lodash._createwrapper', function(module, exports, require) {
       }
       // append partial right arguments
       if (isPartialRight) {
-        push.apply(bindData[3] || (bindData[3] = []), partialRightArgs);
+        unshift.apply(bindData[3] || (bindData[3] = []), partialRightArgs);
       }
       // merge flags
       bindData[1] |= bitmask;
@@ -700,7 +723,7 @@ require.register('lodash._createwrapper', function(module, exports, require) {
 });
 require.register('lodash.bind', function(module, exports, require) {
   /**
-   * Lo-Dash 2.3.0 (Custom Build) <http://lodash.com/>
+   * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
    * Build: `lodash modularize modern exports="npm" -o ./npm/`
    * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
    * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
@@ -708,7 +731,6 @@ require.register('lodash.bind', function(module, exports, require) {
    * Available under MIT license <http://lodash.com/license>
    */
   var createWrapper = require('lodash._createwrapper'),
-      reNative = require('lodash._renative'),
       slice = require('lodash._slice');
   
   /**
@@ -744,7 +766,7 @@ require.register('lodash.bind', function(module, exports, require) {
 });
 require.register('lodash.identity', function(module, exports, require) {
   /**
-   * Lo-Dash 2.3.0 (Custom Build) <http://lodash.com/>
+   * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
    * Build: `lodash modularize modern exports="npm" -o ./npm/`
    * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
    * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
@@ -775,14 +797,14 @@ require.register('lodash.identity', function(module, exports, require) {
 });
 require.register('lodash.support', function(module, exports, require) {
   /**
-   * Lo-Dash 2.3.0 (Custom Build) <http://lodash.com/>
+   * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
    * Build: `lodash modularize modern exports="npm" -o ./npm/`
    * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
    * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
    * Copyright 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
    * Available under MIT license <http://lodash.com/license>
    */
-  var reNative = require('lodash._renative');
+  var isNative = require('lodash._isnative');
   
   /** Used to detect functions containing a `this` reference */
   var reThis = /\bthis\b/;
@@ -803,7 +825,7 @@ require.register('lodash.support', function(module, exports, require) {
    * @memberOf _.support
    * @type boolean
    */
-  support.funcDecomp = !reNative.test(global.WinRTError) && reThis.test(function() { return this; });
+  support.funcDecomp = !isNative(global.WinRTError) && reThis.test(function() { return this; });
   
   /**
    * Detect if `Function#name` is supported (all but IE).
@@ -818,7 +840,7 @@ require.register('lodash.support', function(module, exports, require) {
 });
 require.register('lodash._basecreatecallback', function(module, exports, require) {
   /**
-   * Lo-Dash 2.3.0 (Custom Build) <http://lodash.com/>
+   * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
    * Build: `lodash modularize modern exports="npm" -o ./npm/`
    * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
    * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
@@ -901,7 +923,7 @@ require.register('lodash._basecreatecallback', function(module, exports, require
 });
 require.register('lodash.forin', function(module, exports, require) {
   /**
-   * Lo-Dash 2.3.0 (Custom Build) <http://lodash.com/>
+   * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
    * Build: `lodash modularize modern exports="npm" -o ./npm/`
    * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
    * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
@@ -958,7 +980,7 @@ require.register('lodash.forin', function(module, exports, require) {
 });
 require.register('lodash._arraypool', function(module, exports, require) {
   /**
-   * Lo-Dash 2.3.0 (Custom Build) <http://lodash.com/>
+   * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
    * Build: `lodash modularize modern exports="npm" -o ./npm/`
    * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
    * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
@@ -974,7 +996,7 @@ require.register('lodash._arraypool', function(module, exports, require) {
 });
 require.register('lodash._getarray', function(module, exports, require) {
   /**
-   * Lo-Dash 2.3.0 (Custom Build) <http://lodash.com/>
+   * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
    * Build: `lodash modularize modern exports="npm" -o ./npm/`
    * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
    * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
@@ -998,7 +1020,7 @@ require.register('lodash._getarray', function(module, exports, require) {
 });
 require.register('lodash._maxpoolsize', function(module, exports, require) {
   /**
-   * Lo-Dash 2.3.0 (Custom Build) <http://lodash.com/>
+   * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
    * Build: `lodash modularize modern exports="npm" -o ./npm/`
    * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
    * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
@@ -1014,7 +1036,7 @@ require.register('lodash._maxpoolsize', function(module, exports, require) {
 });
 require.register('lodash._releasearray', function(module, exports, require) {
   /**
-   * Lo-Dash 2.3.0 (Custom Build) <http://lodash.com/>
+   * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
    * Build: `lodash modularize modern exports="npm" -o ./npm/`
    * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
    * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
@@ -1042,7 +1064,7 @@ require.register('lodash._releasearray', function(module, exports, require) {
 });
 require.register('lodash._baseisequal', function(module, exports, require) {
   /**
-   * Lo-Dash 2.3.0 (Custom Build) <http://lodash.com/>
+   * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
    * Build: `lodash modularize modern exports="npm" -o ./npm/`
    * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
    * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
@@ -1194,51 +1216,54 @@ require.register('lodash._baseisequal', function(module, exports, require) {
   
     // recursively compare objects and arrays (susceptible to call stack limits)
     if (isArr) {
+      // compare lengths to determine if a deep comparison is necessary
       length = a.length;
       size = b.length;
+      result = size == length;
   
-      // compare lengths to determine if a deep comparison is necessary
-      result = size == a.length;
-      if (!result && !isWhere) {
-        return result;
-      }
-      // deep compare the contents, ignoring non-numeric properties
-      while (size--) {
-        var index = length,
-            value = b[size];
+      if (result || isWhere) {
+        // deep compare the contents, ignoring non-numeric properties
+        while (size--) {
+          var index = length,
+              value = b[size];
   
-        if (isWhere) {
-          while (index--) {
-            if ((result = baseIsEqual(a[index], value, callback, isWhere, stackA, stackB))) {
-              break;
+          if (isWhere) {
+            while (index--) {
+              if ((result = baseIsEqual(a[index], value, callback, isWhere, stackA, stackB))) {
+                break;
+              }
             }
+          } else if (!(result = baseIsEqual(a[size], value, callback, isWhere, stackA, stackB))) {
+            break;
           }
-        } else if (!(result = baseIsEqual(a[size], value, callback, isWhere, stackA, stackB))) {
-          break;
         }
       }
-      return result;
     }
-    // deep compare objects using `forIn`, instead of `forOwn`, to avoid `Object.keys`
-    // which, in this case, is more costly
-    forIn(b, function(value, key, b) {
-      if (hasOwnProperty.call(b, key)) {
-        // count the number of properties.
-        size++;
-        // deep compare each property value.
-        return (result = hasOwnProperty.call(a, key) && baseIsEqual(a[key], value, callback, isWhere, stackA, stackB));
-      }
-    });
-  
-    if (result && !isWhere) {
-      // ensure both objects have the same number of properties
-      forIn(a, function(value, key, a) {
-        if (hasOwnProperty.call(a, key)) {
-          // `size` will be `-1` if `a` has more properties than `b`
-          return (result = --size > -1);
+    else {
+      // deep compare objects using `forIn`, instead of `forOwn`, to avoid `Object.keys`
+      // which, in this case, is more costly
+      forIn(b, function(value, key, b) {
+        if (hasOwnProperty.call(b, key)) {
+          // count the number of properties.
+          size++;
+          // deep compare each property value.
+          return (result = hasOwnProperty.call(a, key) && baseIsEqual(a[key], value, callback, isWhere, stackA, stackB));
         }
       });
+  
+      if (result && !isWhere) {
+        // ensure both objects have the same number of properties
+        forIn(a, function(value, key, a) {
+          if (hasOwnProperty.call(a, key)) {
+            // `size` will be `-1` if `a` has more properties than `b`
+            return (result = --size > -1);
+          }
+        });
+      }
     }
+    stackA.pop();
+    stackB.pop();
+  
     if (initedStack) {
       releaseArray(stackA);
       releaseArray(stackB);
@@ -1251,7 +1276,7 @@ require.register('lodash._baseisequal', function(module, exports, require) {
 });
 require.register('lodash._shimkeys', function(module, exports, require) {
   /**
-   * Lo-Dash 2.3.0 (Custom Build) <http://lodash.com/>
+   * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
    * Build: `lodash modularize modern exports="npm" -o ./npm/`
    * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
    * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
@@ -1292,19 +1317,19 @@ require.register('lodash._shimkeys', function(module, exports, require) {
 });
 require.register('lodash.keys', function(module, exports, require) {
   /**
-   * Lo-Dash 2.3.0 (Custom Build) <http://lodash.com/>
+   * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
    * Build: `lodash modularize modern exports="npm" -o ./npm/`
    * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
    * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
    * Copyright 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
    * Available under MIT license <http://lodash.com/license>
    */
-  var isObject = require('lodash.isobject'),
-      reNative = require('lodash._renative'),
+  var isNative = require('lodash._isnative'),
+      isObject = require('lodash.isobject'),
       shimKeys = require('lodash._shimkeys');
   
   /* Native method shortcuts for methods with the same name as other `lodash` methods */
-  var nativeKeys = reNative.test(nativeKeys = Object.keys) && nativeKeys;
+  var nativeKeys = isNative(nativeKeys = Object.keys) && nativeKeys;
   
   /**
    * Creates an array composed of the own enumerable property names of an object.
@@ -1329,9 +1354,52 @@ require.register('lodash.keys', function(module, exports, require) {
   module.exports = keys;
   
 });
+require.register('lodash.property', function(module, exports, require) {
+  /**
+   * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
+   * Build: `lodash modularize modern exports="npm" -o ./npm/`
+   * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
+   * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
+   * Copyright 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+   * Available under MIT license <http://lodash.com/license>
+   */
+  
+  /**
+   * Creates a "_.pluck" style function, which returns the `key` value of a
+   * given object.
+   *
+   * @static
+   * @memberOf _
+   * @category Utilities
+   * @param {string} key The name of the property to retrieve.
+   * @returns {Function} Returns the new function.
+   * @example
+   *
+   * var characters = [
+   *   { 'name': 'fred',   'age': 40 },
+   *   { 'name': 'barney', 'age': 36 }
+   * ];
+   *
+   * var getName = _.property('name');
+   *
+   * _.map(characters, getName);
+   * // => ['barney', 'fred']
+   *
+   * _.sortBy(characters, getName);
+   * // => [{ 'name': 'barney', 'age': 36 }, { 'name': 'fred',   'age': 40 }]
+   */
+  function property(key) {
+    return function(object) {
+      return object[key];
+    };
+  }
+  
+  module.exports = property;
+  
+});
 require.register('lodash.createcallback', function(module, exports, require) {
   /**
-   * Lo-Dash 2.3.0 (Custom Build) <http://lodash.com/>
+   * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
    * Build: `lodash modularize modern exports="npm" -o ./npm/`
    * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
    * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
@@ -1341,7 +1409,8 @@ require.register('lodash.createcallback', function(module, exports, require) {
   var baseCreateCallback = require('lodash._basecreatecallback'),
       baseIsEqual = require('lodash._baseisequal'),
       isObject = require('lodash.isobject'),
-      keys = require('lodash.keys');
+      keys = require('lodash.keys'),
+      property = require('lodash.property');
   
   /**
    * Produces a callback bound to an optional `thisArg`. If `func` is a property
@@ -1351,7 +1420,7 @@ require.register('lodash.createcallback', function(module, exports, require) {
    *
    * @static
    * @memberOf _
-   * @category Functions
+   * @category Utilities
    * @param {*} [func=identity] The value to convert to a callback.
    * @param {*} [thisArg] The `this` binding of the created callback.
    * @param {number} [argCount] The number of arguments the callback accepts.
@@ -1381,9 +1450,7 @@ require.register('lodash.createcallback', function(module, exports, require) {
     }
     // handle "_.pluck" style callback shorthands
     if (type != 'object') {
-      return function(object) {
-        return object[func];
-      };
+      return property(func);
     }
     var props = keys(func),
         key = props[0],
@@ -1416,7 +1483,7 @@ require.register('lodash.createcallback', function(module, exports, require) {
 });
 require.register('lodash.forown', function(module, exports, require) {
   /**
-   * Lo-Dash 2.3.0 (Custom Build) <http://lodash.com/>
+   * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
    * Build: `lodash modularize modern exports="npm" -o ./npm/`
    * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
    * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
@@ -1469,7 +1536,7 @@ require.register('lodash.forown', function(module, exports, require) {
 });
 require.register('lodash.map', function(module, exports, require) {
   /**
-   * Lo-Dash 2.3.0 (Custom Build) <http://lodash.com/>
+   * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
    * Build: `lodash modularize modern exports="npm" -o ./npm/`
    * Copyright 2012-2013 The Dojo Foundation <http://dojofoundation.org/>
    * Based on Underscore.js 1.5.2 <http://underscorejs.org/LICENSE>
@@ -2092,9 +2159,9 @@ require.register('style', function(module, exports, require) {
   	prop = getPrefixed(prop);
   
   	// Handle special transform properties
+  	// TODO: bulk multiple transforms?
   	if (transform[property]) {
   		value = generateTransform(element, property, value);
-  		// console.log(value)
   	}
   
   	element.style[camelCase(prop)] = value;
