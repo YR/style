@@ -13,13 +13,16 @@
   "devDependencies": {
     "mocha": "*",
     "expect.js": "*",
-    "buddy": "*"
+    "buddy": "*",
+    "mocha-sauce": "git://github.com/pbakaus/mocha-sauce.git",
+    "term-canvas": "*"
   },
   "main": "index.js",
   "repository": "https://github.com/yr/style.git",
   "license": "MIT",
   "scripts": {
-    "test": "buddy build && mocha-phantomjs test/test-runner.html"
+    "test": "buddy build && mocha-phantomjs test/test-runner.html",
+    "sauce": "node test/sauce.js"
   },
   "buddy": {
     "build": {

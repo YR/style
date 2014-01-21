@@ -4,6 +4,7 @@ var style, expect, element;
 try {
 	style = require('../index.js');
 	expect = require('expect.js');
+	require('./sauce.js');
 // .. or browser
 } catch (err) {
 	style = require('./style');
