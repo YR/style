@@ -11,6 +11,12 @@ try {
 	expect = window.expect;
 }
 
+function findPrefixedProp () {
+	for (var prop in style.platformStyles) {
+		if (~prop.indexOf(style.platformPrefix)) return prop.slice(style.platformPrefix.length);
+	}
+}
+
 describe('style', function () {
 	beforeEach(function () {
 		element = document.createElement('div');
@@ -20,22 +26,44 @@ describe('style', function () {
 		document.body.removeChild(element);
 	});
 
-	describe('getPrefixed', function () {
-		it('should return a prefixed property name when passed the non-prefixed version', function () {
-			var prop = style.getPrefixed('transition-duration');
-			if (style.prefix) {
-				expect(prop).to.equal(style.prefix + 'transition-duration');
-			} else {
-				expect(prop).to.equal('transition-duration');
-			}
+	describe('isSupported', function () {
+		it('should return "true" for a supported property', function () {
+			expect(style.isSupported('display')).to.be.ok();
 		});
-		it('should return the correct transform property when passed a transform shortcut', function () {
+		it('should return "false" for an unsupported property', function () {
+			expect(style.isSupported('foo')).to.not.be.ok();
+		});
+		it('should return "true" for a prefixed property', function () {
+			expect(style.isSupported(findPrefixedProp())).to.be.ok();
+		});
+		it('should cache supported styles in "platformStyles"', function () {
+			var defaults = style.platformStyles
+				, cached;
+			style.platformStyles = {};
+			style.isSupported('display');
+			cached = 'display' in style.platformStyles;
+			style.platformStyles = defaults;
+			expect(cached).to.be.ok();
+		});
+	});
+
+	describe('getPrefixed', function () {
+		before(function() {
+			this.defaults = style.platformStyles;
+			style.platformStyles = {};
+			style.platformStyles[style.platformPrefix + 'transition'] = true;
+			style.platformStyles[style.platformPrefix + 'transform'] = true;
+		});
+		after(function() {
+			style.platformStyles = this.defaults;
+		})
+		it('should return a prefixed property name when passed the non-prefixed version', function () {
+			var prop = findPrefixedProp();
+			expect(style.getPrefixed(prop)).to.equal(style.platformPrefix + prop);
+		});
+		it('should return the correct transform property when passed a transform pseudo-property', function () {
 			var prop = style.getPrefixed('translate');
-			if (style.prefix) {
-				expect(prop).to.equal(style.prefix + 'transform');
-			} else {
-				expect(prop).to.equal('transform');
-			}
+			expect(prop).to.equal(style.platformPrefix + 'transform');
 		});
 	});
 
@@ -44,6 +72,10 @@ describe('style', function () {
 			var props = style.getAll('border-radius');
 			expect(props).to.contain('border-radius');
 			expect(props.length).to.be.greaterThan(4);
+		});
+		it('should correctly handle transform pseudo-properties', function () {
+			var props = style.getAll('translate');
+			expect(props).to.contain('transform');
 		});
 	});
 
@@ -147,9 +179,9 @@ describe('style', function () {
 	});
 
 	describe('expandShorthand', function () {
-		var props;
-		props = style.expandShorthand('margin', '10px');
 		it('should return an array of longhand properties', function () {
+			var props;
+			props = style.expandShorthand('margin', '10px');
 			expect(props).to.have.property('margin-top');
 			expect(props).to.have.property('margin-bottom');
 			expect(props).to.have.property('margin-left');
@@ -267,49 +299,51 @@ describe('style', function () {
 			style.setStyle(element, 'translate', ['100px', '100px']);
 			expect(element.style[style.getPrefixed('transform')]).to.equal('translate(100px, 100px)');
 		});
-		it('should set "translate3d" shortcut property when passed an array', function () {
-			style.setStyle(element, 'translate3d', [100, 100, 100]);
-			expect(element.style[style.getPrefixed('transform')]).to.equal('translate3d(100px, 100px, 100px)');
-		});
+		if (style.has3DTransforms) {
+			it('should set "translate3d" shortcut property when passed an array', function () {
+				style.setStyle(element, 'translate3d', [100, 100, 100]);
+				expect(element.style[style.getPrefixed('transform')]).to.equal('translate3d(100px, 100px, 100px)');
+			});
+			it('should set "scale3d" shortcut property when passed an array', function () {
+				style.setStyle(element, 'scale3d', [0.5, 0.5, 0.5]);
+				expect(element.style[style.getPrefixed('transform')]).to.equal('scale3d(0.5, 0.5, 0.5)');
+			});
+			it('should preserve existing 2d translation transform properties when setting special 3d translation transform shortcut properties', function () {
+				style.setStyle(element, 'translateY', '100px');
+				style.setStyle(element, 'translateZ', '200px');
+				expect(window.getComputedStyle(element).getPropertyValue(style.getPrefixed('transform'))).to.equal('matrix3d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 100, 200, 1)');
+			});
+		}
 		it('should set "scale" shortcut property when passed an array', function () {
-			style.setStyle(element, 'scale', [0.5, 0.5]);
-			expect(element.style[style.getPrefixed('transform')]).to.equal('scale(0.5, 0.5)');
+			style.setStyle(element, 'scale', [0.5, 0.4]);
+			expect(element.style[style.getPrefixed('transform')]).to.equal('scale(0.5, 0.4)');
 		});
-		it('should set "scale3d" shortcut property when passed an array', function () {
-			style.setStyle(element, 'scale3d', [0.5, 0.5, 0.5]);
-			expect(element.style[style.getPrefixed('transform')]).to.equal('scale3d(0.5, 0.5, 0.5)');
-		});
-		it('should preserve existing translation transform properties when setting special translation transform shortcut properties', function () {
+		it('should preserve existing translation transform properties when setting special translation transform pseudo-properties', function () {
 			style.setStyle(element, 'translateY', '100px');
 			style.setStyle(element, 'translateX', '100px');
 			expect(window.getComputedStyle(element).getPropertyValue(style.getPrefixed('transform'))).to.equal('matrix(1, 0, 0, 1, 100, 100)');
 		});
-		it('should preserve existing translation transform properties when setting special non-translation transform shortcut properties', function () {
+		it('should preserve existing translation transform properties when setting special non-translation transform pseudo-properties', function () {
 			style.setStyle(element, 'translateY', '100px');
 			style.setStyle(element, 'scale', [0.5,0.5]);
 			expect(window.getComputedStyle(element).getPropertyValue(style.getPrefixed('transform'))).to.equal('matrix(0.5, 0, 0, 0.5, 0, 100)');
 		});
-		it('should preserve existing non-translation transform properties when setting special translation transform shortcut properties', function () {
+		it('should preserve existing non-translation transform properties when setting special translation transform pseudo-properties', function () {
 			style.setStyle(element, 'scale', [0.5,0.5]);
 			style.setStyle(element, 'translateY', '100px');
 			expect(window.getComputedStyle(element).getPropertyValue(style.getPrefixed('transform'))).to.equal('matrix(0.5, 0, 0, 0.5, 0, 50)');
 		});
-		it('should preserve existing 2d translation transform properties when setting special 3d translation transform shortcut properties', function () {
-			style.setStyle(element, 'translateY', '100px');
-			style.setStyle(element, 'translateZ', '200px');
-			expect(window.getComputedStyle(element).getPropertyValue(style.getPrefixed('transform'))).to.equal('matrix3d(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 100, 200, 1)');
-		});
-		it('should overwrite existing translation transform properties of the same type when setting special translation transform shortcut properties', function () {
+		it('should overwrite existing translation transform properties of the same type when setting special translation transform pseudo-properties', function () {
 			style.setStyle(element, 'translateY', '100px');
 			style.setStyle(element, 'translateY', 200);
 			expect(window.getComputedStyle(element).getPropertyValue(style.getPrefixed('transform'))).to.equal('matrix(1, 0, 0, 1, 0, 200)');
 		});
-		it('should overwrite existing translation transform properties of the same type when setting special grouped translation transform shortcut properties', function () {
+		it('should overwrite existing translation transform properties of the same type when setting special grouped translation transform pseudo-properties', function () {
 			style.setStyle(element, 'translateY', '100px');
 			style.setStyle(element, 'translate', [100, 200]);
 			expect(window.getComputedStyle(element).getPropertyValue(style.getPrefixed('transform'))).to.equal('matrix(1, 0, 0, 1, 100, 200)');
 		});
-		it('should overwrite existing non-translation transform properties when setting special non-translation transform shortcut properties', function () {
+		it('should overwrite existing non-translation transform properties when setting special non-translation transform pseudo-properties', function () {
 			style.setStyle(element, 'rotate', '45deg');
 			style.setStyle(element, 'scale', [0.5, 0.5]);
 			expect(window.getComputedStyle(element).getPropertyValue(style.getPrefixed('transform'))).to.equal('matrix(0.5, 0, 0, 0.5, 0, 0)');
@@ -365,7 +399,7 @@ describe('style', function () {
 			expect(styl).to.contain('width');
 			expect(styl).to.contain('height');
 		});
-		it('should completly remove a special shortcut transform style rule from a setStyle() call', function () {
+		it('should completly remove a special pseudo-property transform style rule from a setStyle() call', function () {
 			style.setStyle(element, {
 				'translateX': 100,
 				'width': 100,

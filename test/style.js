@@ -1,3 +1,88 @@
+(function(root) {
+	// Load or return cached version of requested module with id 'path' or 'path/index'
+	// @param {String} path
+	// @return {Object}
+	function require (path) {
+		// Convert relative path to absolute for cases where 'require' has not been resolved
+		// called from outside of a module, for example
+		if (!this.module && path.charAt(0) == '.') {
+			path = path.slice((path.indexOf('..') === 0) ? 3 : 2);
+		}
+		// Check with/without root package (need to handle node_modules differently)
+		var paths = [path, path.slice(path.indexOf('/') + 1)]
+			, m;
+		// Find in cache
+		for (var i = 0, n = paths.length; i < n; i++) {
+			path = paths[i];
+			m = require.modules[path] || require.modules[path + '/index'];
+			if (m) break;
+		}
+		if (!m) {
+			throw "Couldn't find module for: " + path;
+		}
+		// Instantiate the module if it's export object is not yet defined
+		if (!m.exports) {
+			// Convert 'lazy' evaluated string to Function
+			if ('string' == typeof m) {
+				m = require.modules[path] = new Function('module', 'exports', 'require', m);
+			}
+			m.exports = {};
+			m.filename = path;
+			m.call(this, m, m.exports, require.relative(path));
+		}
+		// Return the exports object
+		return m.exports;
+	}
+
+	// Cache of module objects
+	require.modules = {};
+
+	// Resolve 'to' an absolute path
+	// @param {String} curr
+	// @param {String} path
+	// @return {String}
+	require.resolve = function(from, to) {
+		var fromSegs = from.split('/')
+			, seg;
+
+		// Non relative path
+		if (to.charAt(0) != '.') return to;
+
+		// Don't strip root paths (handled specially in require())
+		if (fromSegs.length > 1) fromSegs.pop();
+		to = to.split('/');
+		// Use 'from' path segments to resolve relative 'to' path
+		for (var i = 0; i < to.length; ++i) {
+			seg = to[i];
+			if (seg == '..') {
+				fromSegs.pop();
+			} else if (seg != '.') {
+				fromSegs.push(seg);
+			}
+		}
+		return fromSegs.join('/');
+	};
+
+	// Partial completion of the module's inner 'require' function
+	// @param {String} path
+	// @return {Object}
+	require.relative = function(path) {
+		return function(p) {
+			return require(require.resolve(path, p));
+		};
+	};
+
+	// Register a module with id of 'path' and callback of 'fn'
+	// @param {String} path
+	// @param {Function} fn [signature should be of type (module, exports, require)]
+	require.register = function(path, fn) {
+		require.modules[path] = fn;
+	};
+
+	// Expose
+	root.require = require;
+})(window != null ? window : global);
+
 require.register('lodash._objecttypes', function(module, exports, require) {
   /**
    * Lo-Dash 2.4.1 (Custom Build) <http://lodash.com/>
@@ -1617,6 +1702,7 @@ require.register('style', function(module, exports, require) {
   	, map = require('lodash.map')
   	, win = window
   	, doc = window.document
+  	, el = doc.createElement('div')
   
   		// Hash of unit values
   	, numeric = {
@@ -1691,8 +1777,8 @@ require.register('style', function(module, exports, require) {
   			'matrix3d': true
   		}
   
-  	, defaultStyles = {}
-  	, prefix = ''
+  	, platformStyles = {}
+  	, platformPrefix = ''
   
   	, RE_UNITS = /(px|%|em|ms|s|deg)$/
   	, RE_IE_OPACITY = /opacity=(\d+)/i
@@ -1718,20 +1804,13 @@ require.register('style', function(module, exports, require) {
   // Store all possible styles this platform supports
   var s = current(doc.documentElement)
   	, add = function (prop) {
-  			defaultStyles[prop] = true;
+  			platformStyles[prop] = true;
   			// Grab the prefix style
-  			if (!prefix && prop.charAt(0) == '-') {
-  				prefix = /^-\w+-/.exec(prop)[0];
-  			}
-  			// Force inclusion of 'transition'
-  			if (prefix && ~prop.indexOf('transition')) {
-  				if (~prop.indexOf(prefix)) {
-  					defaultStyles[prefix + 'transition'] = true;
-  				} else {
-  					defaultStyles['transition'] = true;
-  				}
+  			if (!platformPrefix && prop.charAt(0) == '-') {
+  				platformPrefix = /^-\w+-/.exec(prop)[0];
   			}
   		};
+  
   if (s.length) {
   	for (var i = 0, n = s.length; i < n; i++) {
   		add(s[i]);
@@ -1743,9 +1822,10 @@ require.register('style', function(module, exports, require) {
   }
   
   // Store opacity property name (normalize IE opacity/filter)
-  var opacity = !defaultStyles['opacity'] && defaultStyles['filter'] ? 'filter' : 'opacity';
+  var opacity = !platformStyles['opacity'] && platformStyles['filter'] ? 'filter' : 'opacity';
   
   // API
+  exports.isSupported = isSupported;
   exports.getPrefixed = getPrefixed;
   exports.getShorthand = getShorthand;
   exports.getAll = getAll;
@@ -1758,10 +1838,43 @@ require.register('style', function(module, exports, require) {
   exports.getNumericStyle = getNumericStyle;
   exports.setStyle = setStyle;
   exports.clearStyle = clearStyle;
-  exports.prefix = prefix;
-  // CSS# feature tests
-  exports.hasTransitions = getPrefixed('transition-duration') in defaultStyles;
-  exports.hasTransforms = getPrefixed('transform') in defaultStyles;
+  exports.platformStyles = platformStyles;
+  exports.platformPrefix = platformPrefix;
+  // CSS3 feature tests (also forces cache inclusion)
+  exports.hasTransitions = isSupported('transition');
+  exports.hasTransforms = isSupported('transform');
+  exports.has3DTransforms = (function () {
+  	if (exports.hasTransforms) {
+  		var prop = camelCase(getPrefixed('transform'));
+  		el.style[prop] = 'translateZ(10px)';
+  		return el.style[prop] != '';
+  	}
+  	return false;
+  })();
+  
+  /**
+   * Determine if 'property' is supported on this platform
+   * @returns {Boolean}
+   */
+  function isSupported (property) {
+  	var props = [property, platformPrefix + property]
+  		, support = false
+  		, prop;
+  
+  	for (var i = 0, n = props.length; i < n; i++) {
+  		prop = props[i];
+  		// Use cached
+  		if (exports.platformStyles[prop]) return true;
+  		if (typeof el.style[prop] === 'string'
+  			|| typeof el.style[camelCase(prop)] === 'string') {
+  				support = true;
+  				exports.platformStyles[prop] = true;
+  				break;
+  		}
+  	}
+  
+  	return support;
+  }
   
   /**
    * Retrieve the vendor prefixed version of the property
@@ -1769,14 +1882,22 @@ require.register('style', function(module, exports, require) {
    * @returns {String}
    */
   function getPrefixed (property) {
-  	// Handle transform property shortcuts
-  	if (transform[property]) {
-  		property = 'transform';
+  	if (typeof property === 'string') {
+  		// Handle transform pseudo-properties
+  		if (transform[property]) {
+  			property = 'transform';
+  		}
+  
+  		if (exports.platformStyles[property]) return property;
+  
+  		if (isSupported(property)) {
+  			if (exports.platformStyles[platformPrefix + property]) {
+  				property = platformPrefix + property;
+  			}
+  		}
   	}
   
-  	return defaultStyles[prefix + property]
-  		? prefix + property
-  		: property;
+  	return property;
   }
   
   /**
@@ -1798,22 +1919,21 @@ require.register('style', function(module, exports, require) {
    * @returns {Array}
    */
   function getAll (property) {
-  	var all = []
-  		, prefixed;
+  	var all = [];
   
-  	all.push(property);
-  
-  	// Handle shorthands
-  	property = shorthand[property] || property;
-  	if (isArray(property)) {
-  		for (var i = 0, n = property.length; i < n; i++) {
-  			all = all.concat(getAll(property[i]))
-  		}
+  	// Handle transform pseudo-properties
+  	if (transform[property]) {
+  		property = 'transform';
   	}
   
-  	// Get vendor prefixed
-  	if ((prefixed = getPrefixed(property)) != property) {
-  		all.push(prefixed);
+  	all.push(property);
+  	// Handle shorthands
+  	if (shorthand[property]) {
+  		all = all.concat(shorthand[property]);
+  	}
+  	// Automatically add vendor prefix
+  	for (var i = 0, n = all.length; i < n; i++) {
+  		all.push(platformPrefix + all[i]);
   	}
   
   	return all;
@@ -2179,7 +2299,7 @@ require.register('style', function(module, exports, require) {
   	if (style) {
   		property = getAll(property).join('[\\w-]*|') + '[\\w-]*';
   
-  		re = new RegExp('(?:^|\\s)(?:' + property + '):\\s[^;]+;', 'g');
+  		re = new RegExp('(?:^|\\s)(?:' + property + '):\\s?[^;]+;', 'ig');
   		element.setAttribute('style', style.replace(re, ''));
   	}
   }
@@ -2221,10 +2341,11 @@ require.register('style', function(module, exports, require) {
    * @returns {String}
    */
   function camelCase (str) {
-  	// TODO: check that IE doesn't capitalize -ms prefix
-  	return str.replace(/-([a-z])/g, function($0, $1) {
-  		return $1.toUpperCase();
-  	}).replace('-', '');
+  	// IE requires vendor prefixed values to start with lowercase
+  	if (str.indexOf('-ms-') == 0) str = str.slice(1);
+  	return str.replace(/-([a-z]|[0-9])/ig, function(all, letter) {
+  		return (letter + '').toUpperCase();
+  	});
   }
   
   /**

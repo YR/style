@@ -7,6 +7,7 @@ var isObject = require('lodash.isobject')
 	, map = require('lodash.map')
 	, win = window
 	, doc = window.document
+	, el = doc.createElement('div')
 
 		// Hash of unit values
 	, numeric = {
@@ -81,8 +82,8 @@ var isObject = require('lodash.isobject')
 			'matrix3d': true
 		}
 
-	, defaultStyles = {}
-	, prefix = ''
+	, platformStyles = {}
+	, platformPrefix = ''
 
 	, RE_UNITS = /(px|%|em|ms|s|deg)$/
 	, RE_IE_OPACITY = /opacity=(\d+)/i
@@ -108,20 +109,13 @@ var isObject = require('lodash.isobject')
 // Store all possible styles this platform supports
 var s = current(doc.documentElement)
 	, add = function (prop) {
-			defaultStyles[prop] = true;
+			platformStyles[prop] = true;
 			// Grab the prefix style
-			if (!prefix && prop.charAt(0) == '-') {
-				prefix = /^-\w+-/.exec(prop)[0];
-			}
-			// Force inclusion of 'transition'
-			if (prefix && ~prop.indexOf('transition')) {
-				if (~prop.indexOf(prefix)) {
-					defaultStyles[prefix + 'transition'] = true;
-				} else {
-					defaultStyles['transition'] = true;
-				}
+			if (!platformPrefix && prop.charAt(0) == '-') {
+				platformPrefix = /^-\w+-/.exec(prop)[0];
 			}
 		};
+
 if (s.length) {
 	for (var i = 0, n = s.length; i < n; i++) {
 		add(s[i]);
@@ -133,9 +127,10 @@ if (s.length) {
 }
 
 // Store opacity property name (normalize IE opacity/filter)
-var opacity = !defaultStyles['opacity'] && defaultStyles['filter'] ? 'filter' : 'opacity';
+var opacity = !platformStyles['opacity'] && platformStyles['filter'] ? 'filter' : 'opacity';
 
 // API
+exports.isSupported = isSupported;
 exports.getPrefixed = getPrefixed;
 exports.getShorthand = getShorthand;
 exports.getAll = getAll;
@@ -148,10 +143,43 @@ exports.getStyle = getStyle;
 exports.getNumericStyle = getNumericStyle;
 exports.setStyle = setStyle;
 exports.clearStyle = clearStyle;
-exports.prefix = prefix;
-// CSS# feature tests
-exports.hasTransitions = getPrefixed('transition-duration') in defaultStyles;
-exports.hasTransforms = getPrefixed('transform') in defaultStyles;
+exports.platformStyles = platformStyles;
+exports.platformPrefix = platformPrefix;
+// CSS3 feature tests (also forces cache inclusion)
+exports.hasTransitions = isSupported('transition');
+exports.hasTransforms = isSupported('transform');
+exports.has3DTransforms = (function () {
+	if (exports.hasTransforms) {
+		var prop = camelCase(getPrefixed('transform'));
+		el.style[prop] = 'translateZ(10px)';
+		return el.style[prop] != '';
+	}
+	return false;
+})();
+
+/**
+ * Determine if 'property' is supported on this platform
+ * @returns {Boolean}
+ */
+function isSupported (property) {
+	var props = [property, platformPrefix + property]
+		, support = false
+		, prop;
+
+	for (var i = 0, n = props.length; i < n; i++) {
+		prop = props[i];
+		// Use cached
+		if (exports.platformStyles[prop]) return true;
+		if (typeof el.style[prop] === 'string'
+			|| typeof el.style[camelCase(prop)] === 'string') {
+				support = true;
+				exports.platformStyles[prop] = true;
+				break;
+		}
+	}
+
+	return support;
+}
 
 /**
  * Retrieve the vendor prefixed version of the property
@@ -159,14 +187,22 @@ exports.hasTransforms = getPrefixed('transform') in defaultStyles;
  * @returns {String}
  */
 function getPrefixed (property) {
-	// Handle transform property shortcuts
-	if (transform[property]) {
-		property = 'transform';
+	if (typeof property === 'string') {
+		// Handle transform pseudo-properties
+		if (transform[property]) {
+			property = 'transform';
+		}
+
+		if (exports.platformStyles[property]) return property;
+
+		if (isSupported(property)) {
+			if (exports.platformStyles[platformPrefix + property]) {
+				property = platformPrefix + property;
+			}
+		}
 	}
 
-	return defaultStyles[prefix + property]
-		? prefix + property
-		: property;
+	return property;
 }
 
 /**
@@ -188,22 +224,21 @@ function getShorthand (property) {
  * @returns {Array}
  */
 function getAll (property) {
-	var all = []
-		, prefixed;
+	var all = [];
 
-	all.push(property);
-
-	// Handle shorthands
-	property = shorthand[property] || property;
-	if (isArray(property)) {
-		for (var i = 0, n = property.length; i < n; i++) {
-			all = all.concat(getAll(property[i]))
-		}
+	// Handle transform pseudo-properties
+	if (transform[property]) {
+		property = 'transform';
 	}
 
-	// Get vendor prefixed
-	if ((prefixed = getPrefixed(property)) != property) {
-		all.push(prefixed);
+	all.push(property);
+	// Handle shorthands
+	if (shorthand[property]) {
+		all = all.concat(shorthand[property]);
+	}
+	// Automatically add vendor prefix
+	for (var i = 0, n = all.length; i < n; i++) {
+		all.push(platformPrefix + all[i]);
 	}
 
 	return all;
@@ -569,7 +604,7 @@ function clearStyle (element, property) {
 	if (style) {
 		property = getAll(property).join('[\\w-]*|') + '[\\w-]*';
 
-		re = new RegExp('(?:^|\\s)(?:' + property + '):\\s[^;]+;', 'g');
+		re = new RegExp('(?:^|\\s)(?:' + property + '):\\s?[^;]+;', 'ig');
 		element.setAttribute('style', style.replace(re, ''));
 	}
 }
@@ -611,10 +646,11 @@ function current (element, property) {
  * @returns {String}
  */
 function camelCase (str) {
-	// TODO: check that IE doesn't capitalize -ms prefix
-	return str.replace(/-([a-z])/g, function($0, $1) {
-		return $1.toUpperCase();
-	}).replace('-', '');
+	// IE requires vendor prefixed values to start with lowercase
+	if (str.indexOf('-ms-') == 0) str = str.slice(1);
+	return str.replace(/-([a-z]|[0-9])/ig, function(all, letter) {
+		return (letter + '').toUpperCase();
+	});
 }
 
 /**
