@@ -65,16 +65,18 @@ console.log(el.getAttribute('style')); // => 'width: 100px; height: 100px;'
 
 one of either `-webkit-`, `-moz`, `-ms-`, or `-o-`
 
-**hasTransitions**: `Boolean` indicating support for css transitions on the current system
+**hasTransitions**: `Boolean` indicating support for css transitions on the current platform
 
-**hasTransforms**: `Boolean` indicating support for css transforms on the current system
+**hasTransforms**: `Boolean` indicating support for css transforms on the current platform
+
+**has3DTransforms**: `Boolean` indicating support for 3D css transforms on the current platform
 
 ### Helper functions
 **getPrefixed(property)**: retrieve the vendor prefixed version of `property`
 
 **getShorthand(property)**: retrieve a proxy for a shorthand `property`
 
-**getAll(property)**: retieve all possible variations of `property`, including shorthands and vendor prefixed
+**getAll(property)**: retieve all possible variations of `property`, including shorthands and vendor prefixes
 
 **expandShorthand(property, value)**: convert a shorthand `property` into an object of expanded properties
 
