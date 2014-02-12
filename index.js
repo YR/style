@@ -304,7 +304,7 @@ function getOpacityValue (value) {
 function parseNumber (value, property) {
 	var channels, num, unit, unitTest;
 
-	if (value == null) {
+	if (value == null || value == 'none') {
 		return null;
 	}
 
