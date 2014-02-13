@@ -305,7 +305,7 @@ function parseNumber (value, property) {
 	var channels, num, unit, unitTest;
 
 	if (value == null || value == 'none') {
-		return null;
+		value = 0;
 	}
 
 	// Handle arrays of values (translate, scale)

@@ -1999,8 +1999,8 @@ require.register('style', function(module, exports, require) {
   function parseNumber (value, property) {
   	var channels, num, unit, unitTest;
   
-  	if (value == null) {
-  		return null;
+  	if (value == null || value == 'none') {
+  		value = 0;
   	}
   
   	// Handle arrays of values (translate, scale)
