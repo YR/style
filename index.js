@@ -141,6 +141,7 @@ exports.parseNumber = parseNumber;
 exports.parseTransform = parseTransform;
 exports.getStyle = getStyle;
 exports.getNumericStyle = getNumericStyle;
+exports.getDocumentStyle = getDocumentStyle;
 exports.setStyle = setStyle;
 exports.clearStyle = clearStyle;
 exports.platformStyles = platformStyles;
@@ -545,6 +546,33 @@ function getStyle (element, property) {
  */
 function getNumericStyle (element, property) {
 	return parseNumber(getStyle(element, property), property);
+}
+
+/**
+ * Retrieve the 'property' for matching 'selector' rule in all document stylesheets
+ * @param {String} selector
+ * @param {String} property
+ * @returns {String}
+ */
+function getDocumentStyle (selector, property) {
+	var styleSheets = document.styleSheets
+		, sheet, rules, rule;
+
+	if (styleSheets) {
+		for (var i = 0, n = styleSheets.length; i < n; i++) {
+			sheet = styleSheets[i];
+			if (rules = sheet.rules || sheet.cssRules) {
+				for (var j = 0, m = rules.length; j < m; j++) {
+					rule = rules[j];
+					if (selector === rule.selectorText) {
+						return rule.style.getPropertyValue(property);
+					}
+				}
+			}
+		}
+	}
+
+	return '';
 }
 
 /**

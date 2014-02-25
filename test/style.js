@@ -1836,6 +1836,7 @@ require.register('style', function(module, exports, require) {
   exports.parseTransform = parseTransform;
   exports.getStyle = getStyle;
   exports.getNumericStyle = getNumericStyle;
+  exports.getDocumentStyle = getDocumentStyle;
   exports.setStyle = setStyle;
   exports.clearStyle = clearStyle;
   exports.platformStyles = platformStyles;
@@ -2240,6 +2241,28 @@ require.register('style', function(module, exports, require) {
    */
   function getNumericStyle (element, property) {
   	return parseNumber(getStyle(element, property), property);
+  }
+  
+  function getDocumentStyle (selector, property) {
+  	var styleSheets = document.styleSheets
+  		, sheet, rules, rule;
+  
+  	if (styleSheets) {
+  		for (var i = 0, n = styleSheets.length; i < n; i++) {
+  			sheet = styleSheets[i];
+  			console.log(sheet)
+  			if (rules = sheet.rules || sheet.cssRules) {
+  				for (var j = 0, m = rules.length; j < m; j++) {
+  					rule = rules[j];
+  					if (selector === rule) {
+  						return rule.style.getPropertyValue(property);
+  					}
+  				}
+  			}
+  		}
+  	}
+  
+  	return '';
   }
   
   /**

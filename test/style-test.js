@@ -240,6 +240,10 @@ describe('style', function () {
 		});
 	});
 
+	describe('getDocumentStyle', function () {
+		it('should be testable but Mocha is doing something that prevents access to loaded style rules')
+	});
+
 	describe('setStyle', function () {
 		it('should set the correct element style', function () {
 			style.setStyle(element, 'float', 'left');
