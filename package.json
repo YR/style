@@ -20,6 +20,7 @@
   "main": "index.js",
   "repository": "https://github.com/yr/style.git",
   "license": "MIT",
+  "private": true,
   "scripts": {
     "test": "buddy build && mocha-phantomjs test/test-runner.html",
     "sauce": "node test/sauce.js"
