@@ -4,11 +4,11 @@
   "version": "0.8.0",
   "author": "Alexander Pope <alexander.pope@nrk.no>",
   "dependencies": {
-    "lodash.isobject": "^2.4.0",
-    "lodash.isarray": "^2.4.0",
-    "lodash.isnan": "^2.4.0",
-    "lodash.isstring": "^2.4.0",
-    "lodash.map": "^2.4.0"
+    "lodash.isobject": "~2.4.0",
+    "lodash.isarray": "~2.4.0",
+    "lodash.isnan": "~2.4.0",
+    "lodash.isstring": "~2.4.0",
+    "lodash.map": "~2.4.0"
   },
   "devDependencies": {
     "mocha": "*",
