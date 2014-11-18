@@ -1,9 +1,9 @@
 // TODO: handle setting special shortcut transform properties with arrays (translate, scale)?
 
-var isObject = require('lodash-node/compat/objects/isobject')
-	, isNan = require('lodash-node/compat/objects/isnan')
-	, isArray = require('lodash-node/compat/objects/isarray')
-	, isString = require('lodash-node/compat/objects/isstring')
+var isObject = require('lodash-node/compat/objects/isObject')
+	, isNan = require('lodash-node/compat/objects/isNaN')
+	, isArray = require('lodash-node/compat/objects/isArray')
+	, isString = require('lodash-node/compat/objects/isString')
 	, map = require('lodash-node/compat/collections/map')
 	, win = window
 	, doc = window.document
