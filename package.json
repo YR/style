@@ -9,7 +9,7 @@
   "devDependencies": {
     "mocha": "*",
     "expect.js": "*",
-    "buddy": "*",
+    "buddy": "popeindustries/buddy#2.1.0-beta",
     "mocha-sauce": "git://github.com/pbakaus/mocha-sauce.git",
     "term-canvas": "*"
   },
