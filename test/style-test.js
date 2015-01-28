@@ -1,3 +1,5 @@
+// Lodash complains about missing 'global'
+window.global = window;
 var style, expect, element;
 
 // Make it work in node..
@@ -238,6 +240,10 @@ describe('style', function () {
 				expect(style.getNumericStyle(element, 'translate')).to.eql(null);
 			}
 		});
+	});
+
+	describe('getDocumentStyle', function () {
+		it('should be testable but Mocha is doing something that prevents access to loaded style rules')
 	});
 
 	describe('setStyle', function () {
