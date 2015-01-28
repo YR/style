@@ -1,3 +1,5 @@
+// Lodash complains about missing 'global'
+window.global = window;
 var style, expect, element;
 
 // Make it work in node..
